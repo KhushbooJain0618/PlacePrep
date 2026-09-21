@@ -15,21 +15,21 @@ export const Footer: React.FC = () => {
   ];
 
   return (
-    <footer className="w-full bg-navy-950 border-t border-navy-700/80 pt-12 pb-8 text-slate-400 text-sm">
+    <footer className="w-full bg-black border-t border-white/[0.07] pt-12 pb-8 text-neutral-400 text-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         {/* Azure Technology Badges Section */}
-        <div className="bg-navy-900/60 border border-navy-700/60 rounded-2xl p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 pb-4 border-b border-navy-800">
+        <div className="bg-[#0B0B0F]/90 border border-white/[0.08] rounded-2xl p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 pb-4 border-b border-white/[0.08]">
             <div className="flex items-center gap-2.5">
-              <div className="p-1.5 rounded-lg bg-brand-blue/20 text-brand-cyan">
+              <div className="p-1.5 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20">
                 <Cpu className="w-4 h-4" />
               </div>
-              <span className="text-sm font-semibold text-slate-200">
+              <span className="text-sm font-semibold text-neutral-200">
                 Powered by Microsoft Azure AI Architecture
               </span>
             </div>
-            <span className="text-xs text-slate-400">
-              College AI Capstone Architecture &bullet; Development Mock Mode Enabled
+            <span className="text-xs text-neutral-400">
+              College AI Capstone Architecture &bull; Development Mock Mode Enabled
             </span>
           </div>
 
@@ -37,10 +37,10 @@ export const Footer: React.FC = () => {
             {azureTechnologies.map(tech => (
               <div
                 key={tech.name}
-                className="bg-navy-950/70 border border-navy-700/60 rounded-xl p-3 text-center transition-all hover:border-brand-blue/50"
+                className="bg-[#060608]/80 border border-white/[0.07] rounded-xl p-3 text-center transition-all hover:border-purple-500/40"
               >
-                <div className="text-xs font-semibold text-slate-100">{tech.name}</div>
-                <div className="text-[11px] text-brand-cyan/80 mt-0.5">{tech.role}</div>
+                <div className="text-xs font-semibold text-neutral-100">{tech.name}</div>
+                <div className="text-[11px] text-purple-400/90 mt-0.5">{tech.role}</div>
               </div>
             ))}
           </div>
@@ -49,16 +49,18 @@ export const Footer: React.FC = () => {
         {/* Footer Links & Branding */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-2">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-blue to-brand-cyan flex items-center justify-center text-white">
-              <Sparkles className="w-4 h-4" />
-            </div>
-            <div>
-              <p className="font-bold text-white text-base tracking-tight">PLACEPREP</p>
-              <p className="text-xs text-slate-400">AI-powered campus placement preparation assistant.</p>
-            </div>
+            <Link href="/" className="flex items-center gap-2 group">
+              <span className="text-xl font-bold tracking-tight text-white flex items-center gap-1">
+                PlacePrep
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-glow-purple inline-block ml-0.5 animate-pulse" />
+              </span>
+            </Link>
+            <span className="text-xs text-neutral-400 border-l border-white/10 pl-3">
+              AI-powered campus placement preparation assistant.
+            </span>
           </div>
 
-          <div className="flex items-center gap-6 text-xs text-slate-400">
+          <div className="flex items-center gap-6 text-xs text-neutral-400">
             <Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link>
             <Link href="/chat" className="hover:text-white transition-colors">AI Chat</Link>
             <Link href="/interview" className="hover:text-white transition-colors">Mock Interview</Link>
@@ -68,7 +70,7 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* Responsible AI Disclaimer */}
-        <div className="pt-6 border-t border-navy-800 text-center text-xs text-slate-400 max-w-3xl mx-auto leading-relaxed">
+        <div className="pt-6 border-t border-white/[0.08] text-center text-xs text-neutral-400 max-w-3xl mx-auto leading-relaxed">
           PlacePrep is an academic AI preparation platform. All interview scores and curriculum roadmaps are AI-generated practice estimates. Visual analysis is restricted to presence/framing telemetry and does not assess personality, emotions, honesty, or mental state.
         </div>
       </div>

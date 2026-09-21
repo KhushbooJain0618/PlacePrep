@@ -57,7 +57,7 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({
   }, [isCameraActive]);
 
   return (
-    <div className="relative bg-navy-950 border border-navy-700/80 rounded-2xl overflow-hidden aspect-video flex flex-col items-center justify-center shadow-lg">
+    <div className="relative bg-[#060608] border border-white/[0.08] rounded-2xl overflow-hidden aspect-video flex flex-col items-center justify-center shadow-lg">
       {/* Live Video or Simulated Feed */}
       {isCameraActive && hasPermission ? (
         <video
@@ -69,12 +69,12 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({
         />
       ) : (
         <div className="flex flex-col items-center justify-center text-center p-6 space-y-3">
-          <div className="w-20 h-20 rounded-full bg-navy-900 border border-navy-700 flex items-center justify-center text-slate-400">
-            <User className="w-10 h-10 text-brand-cyan/80" />
+          <div className="w-20 h-20 rounded-full bg-[#0E0E14] border border-white/10 flex items-center justify-center text-neutral-400">
+            <User className="w-10 h-10 text-purple-400/80" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-200">Candidate Video Feed</p>
-            <p className="text-xs text-slate-400">
+            <p className="text-sm font-semibold text-neutral-200">Candidate Video Feed</p>
+            <p className="text-xs text-neutral-400">
               {isCameraActive ? 'Camera active (simulated preview)' : 'Camera is muted'}
             </p>
           </div>
@@ -83,16 +83,16 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({
 
       {/* Top telemetry status bar */}
       <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
-        <div className="flex items-center gap-2 bg-navy-900/80 backdrop-blur-md px-2.5 py-1 rounded-full border border-navy-700/80 text-xs">
-          <span className={`w-2 h-2 rounded-full ${isCameraActive ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
-          <span className="text-slate-200 font-medium">
+        <div className="flex items-center gap-2 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 text-xs">
+          <span className={`w-2 h-2 rounded-full ${isCameraActive ? 'bg-emerald-400 animate-pulse' : 'bg-neutral-500'}`} />
+          <span className="text-neutral-200 font-medium">
             {isCameraActive ? 'Candidate Feed' : 'Camera Off'}
           </span>
         </div>
 
         {isCameraActive && (
-          <div className="flex items-center gap-1.5 bg-navy-900/80 backdrop-blur-md px-2.5 py-1 rounded-full border border-navy-700/80 text-[11px] text-slate-300">
-            <CheckCircle2 className="w-3.5 h-3.5 text-brand-cyan" />
+          <div className="flex items-center gap-1.5 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 text-[11px] text-neutral-300">
+            <CheckCircle2 className="w-3.5 h-3.5 text-purple-400" />
             <span>Framing: Centered</span>
           </div>
         )}
@@ -105,7 +105,7 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({
           type="button"
           className={`p-2.5 rounded-full border transition-all ${
             isMicActive
-              ? 'bg-navy-900/90 border-navy-600 text-slate-100 hover:bg-navy-800'
+              ? 'bg-[#0E0E14]/90 border-white/10 text-white hover:bg-white/10'
               : 'bg-red-500/20 border-red-500/40 text-red-400 hover:bg-red-500/30'
           }`}
           title={isMicActive ? 'Mute Microphone' : 'Unmute Microphone'}
@@ -118,7 +118,7 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({
           type="button"
           className={`p-2.5 rounded-full border transition-all ${
             isCameraActive
-              ? 'bg-navy-900/90 border-navy-600 text-slate-100 hover:bg-navy-800'
+              ? 'bg-[#0E0E14]/90 border-white/10 text-white hover:bg-white/10'
               : 'bg-red-500/20 border-red-500/40 text-red-400 hover:bg-red-500/30'
           }`}
           title={isCameraActive ? 'Turn Off Camera' : 'Turn On Camera'}

@@ -37,29 +37,52 @@ This guide explains how to connect PlacePrep to active Microsoft Azure AI cloud 
 
 ## 3. Configuring PlacePrep Environment Variables
 
-Copy `.env.example` to `.env` in the project root:
+All API keys are configured directly in `backend/.env`.
 
 ```env
-# Disable Mock Mode to connect to live Azure
+# Set to false to activate live Azure calls instead of mock mode
 USE_MOCK_AI=false
 
-# Microsoft Foundry / Azure OpenAI
-AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
+# 1. Microsoft Foundry / Azure OpenAI
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
 AZURE_OPENAI_API_KEY=your_azure_openai_key
 AZURE_OPENAI_DEPLOYMENT_NAME=gpt-4o
+AZURE_OPENAI_API_VERSION=2024-02-01
 
-# Azure AI Search
+# 2. Azure AI Search
 AZURE_SEARCH_ENDPOINT=https://your-search.search.windows.net
 AZURE_SEARCH_API_KEY=your_search_api_key
 AZURE_SEARCH_INDEX_NAME=placement-knowledge-index
 
-# Azure AI Speech
+# 3. Azure AI Speech
 AZURE_SPEECH_KEY=your_speech_key
 AZURE_SPEECH_REGION=eastus
+AZURE_SPEECH_VOICE=en-US-JennyNeural
 
-# Azure AI Vision
-AZURE_VISION_ENDPOINT=https://your-vision.cognitiveservices.azure.com/
+# 4. Azure AI Vision
+AZURE_VISION_ENDPOINT=https://your-vision.cognitiveservices.azure.com
 AZURE_VISION_KEY=your_vision_key
 ```
 
-When `USE_MOCK_AI=false` is set, `backend/src/services` automatically uses the configured Azure endpoints.
+---
+
+## 4. Automated Azure AI Search Seeding
+
+Instead of manually building search indexes and uploading JSON in the Azure portal, PlacePrep includes a turnkey seeder script:
+
+```bash
+cd backend
+npm run seed:azure-search
+```
+
+This command automatically:
+1. Provisions `placement-knowledge-index` on your Azure AI Search instance with the optimal schema.
+2. Ingests and chunks all curated placement preparation documents from `/knowledge-base`.
+
+---
+
+## 5. Live Verification & Diagnostics
+
+Once your keys are saved in `backend/.env`:
+- **Dashboard UI**: Visit the Student Hub (`/dashboard`) to view live Azure status pills for OpenAI, Search, Speech, and Vision. Click **Check Status** to test connection.
+- **Diagnostics API**: Query `GET http://localhost:5000/api/azure/diagnostics` to receive real-time connectivity status and diagnostics for each service.

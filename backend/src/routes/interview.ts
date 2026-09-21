@@ -40,7 +40,7 @@ interviewRouter.post('/answer', async (req: Request, res: Response, next: NextFu
     // Process defensible vision signals
     const visionTelemetry = visionService.processInteractionSignals(visionSignals);
 
-    const answerResult = interviewService.submitAnswer({
+    const answerResult = await interviewService.submitAnswer({
       sessionId,
       questionId,
       transcript: finalTranscript || 'Answer submitted.',

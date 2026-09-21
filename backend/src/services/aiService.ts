@@ -5,6 +5,53 @@ import { mockResponseGenerator } from './mockResponseGenerator.js';
 
 export class AIService {
   /**
+   * Helper to execute completions against Azure OpenAI or Microsoft Foundry.
+   */
+  async completePrompt(messages: { role: 'system' | 'user' | 'assistant'; content: string }[], options: { maxTokens?: number; temperature?: number } = {}): Promise<string | null> {
+    if (config.useMockAI) return null;
+
+    let url = '';
+    let apiKey = '';
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+
+    if (config.azure.openai.endpoint && config.azure.openai.apiKey) {
+      url = `${config.azure.openai.endpoint}/openai/deployments/${config.azure.openai.deploymentName}/chat/completions?api-version=${config.azure.openai.apiVersion}`;
+      apiKey = config.azure.openai.apiKey;
+      headers['api-key'] = apiKey;
+    } else if (config.azure.foundry.projectEndpoint && config.azure.foundry.apiKey) {
+      url = `${config.azure.foundry.projectEndpoint}/models/chat/completions?api-version=2024-05-01-preview`;
+      apiKey = config.azure.foundry.apiKey;
+      headers['api-key'] = apiKey;
+    } else {
+      return null;
+    }
+
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          messages,
+          temperature: options.temperature ?? 0.7,
+          max_tokens: options.maxTokens ?? 800
+        })
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text().catch(() => '');
+        console.error(`[Azure AI API Error] HTTP ${res.status} (${res.statusText}): ${errorText}`);
+        return null;
+      }
+
+      const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
+      return data.choices?.[0]?.message?.content || null;
+    } catch (err) {
+      console.error('[Azure AI Call Failed]:', err);
+      return null;
+    }
+  }
+
+  /**
    * Generates a grounded response for placement preparation queries.
    */
   async generateChatResponse(message: string, history?: { role: 'user' | 'assistant'; content: string }[]): Promise<{ answer: string; sources: string[] }> {
@@ -13,51 +60,28 @@ export class AIService {
     const sourceTitles = sources.map(s => s.title);
 
     // 2. Azure OpenAI / Microsoft Foundry integration
-    if (!config.useMockAI && config.azure.openai.endpoint && config.azure.openai.apiKey) {
-      try {
-        const deployment = config.azure.openai.deploymentName;
-        const apiVersion = '2024-02-01';
-        const url = `${config.azure.openai.endpoint}/openai/deployments/${deployment}/chat/completions?api-version=${apiVersion}`;
-
-        const groundingContext = sources.map(s => `[Source: ${s.title}]\n${s.snippet}`).join('\n\n');
-        const systemPrompt = `You are PlacePrep AI, an expert Campus Placement Preparation Assistant for college students.
+    if (!config.useMockAI) {
+      const groundingContext = sources.map(s => `[Source: ${s.title}]\n${s.snippet}`).join('\n\n');
+      const systemPrompt = `You are PlacePrep AI, an expert Campus Placement Preparation Assistant for college students.
 Ground your answers in placement interview reality (DSA, System Design, DBMS, OOP, CS Fundamentals).
 Use clear formatting, code snippets where appropriate, and cite relevant concepts.
 Grounding references:\n${groundingContext}`;
 
-        const messages = [
-          { role: 'system', content: systemPrompt },
-          ...(history || []).slice(-4),
-          { role: 'user', content: message }
-        ];
+      const messages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
+        { role: 'system', content: systemPrompt },
+        ...(history || []).slice(-4),
+        { role: 'user', content: message }
+      ];
 
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'api-key': config.azure.openai.apiKey
-          },
-          body: JSON.stringify({
-            messages,
-            temperature: 0.7,
-            max_tokens: 800
-          })
-        });
-
-        if (res.ok) {
-          const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
-          const reply = data.choices?.[0]?.message?.content;
-          if (reply) {
-            return {
-              answer: reply,
-              sources: sourceTitles.length > 0 ? sourceTitles : ['Placement Preparation Guide']
-            };
-          }
-        }
-      } catch (err) {
-        console.warn('Azure OpenAI call failed, falling back to mock response generator:', err);
+      const reply = await this.completePrompt(messages, { temperature: 0.7, maxTokens: 800 });
+      if (reply) {
+        return {
+          answer: reply,
+          sources: sourceTitles.length > 0 ? sourceTitles : ['Placement Preparation Guide']
+        };
       }
     }
+
 
     // 3. Mock AI Mode: Intent & Topic-aware Placement Assistant Engine
     const classifiedQuery = chatbotClassifier.classify(message);

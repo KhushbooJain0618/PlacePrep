@@ -105,3 +105,40 @@ export interface RoadmapGenerateResponse {
   weeks: RoadmapWeek[];
   createdAt: string;
 }
+
+export interface StudentUser {
+  id: string;
+  name: string;
+  email: string;
+  targetRole: string;
+  collegeYear?: string;
+  preparationProgress: number;
+  dailyStreak: number;
+  interviewsCompleted: number;
+  topicsCovered: number;
+}
+
+export interface AuthResponse {
+  message: string;
+  token: string;
+  user: StudentUser;
+}
+
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+  targetRole?: string;
+  collegeYear?: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface UpdateProfileRequest {
+  name?: string;
+  targetRole?: string;
+  collegeYear?: string;
+}

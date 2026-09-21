@@ -7,6 +7,8 @@ import {
   QuestionReview
 } from '../models/types.js';
 import { visionService } from './visionService.js';
+import { aiService } from './aiService.js';
+import { config } from '../config/env.js';
 
 interface QuestionTemplate {
   id: string;
@@ -269,7 +271,7 @@ export class InterviewService {
     };
   }
 
-  submitAnswer(params: {
+  async submitAnswer(params: {
     sessionId: string;
     questionId: string;
     transcript: string;
@@ -279,7 +281,7 @@ export class InterviewService {
       lightingQuality?: 'good' | 'fair' | 'poor';
       interactionActive?: boolean;
     };
-  }): InterviewAnswerResponse {
+  }): Promise<InterviewAnswerResponse> {
     const session = this.sessions.get(params.sessionId);
     if (!session) {
       throw new Error('Interview session not found or expired.');
@@ -287,47 +289,97 @@ export class InterviewService {
 
     const currentQ = session.questions.find(q => q.id === params.questionId) || session.questions[session.currentQuestionIndex];
     const transcript = params.transcript || '';
-
-    // Evaluate answer against rubric keywords
     const lowerTranscript = transcript.toLowerCase();
-    const matchedKeywords = currentQ.idealKeywords.filter(k => lowerTranscript.includes(k.toLowerCase()));
-    const coverageRatio = currentQ.idealKeywords.length > 0 ? (matchedKeywords.length / currentQ.idealKeywords.length) : 0.7;
 
-    // Technical knowledge score (0-100)
-    let technicalScore = Math.round(55 + (coverageRatio * 40));
-    if (transcript.length < 25) technicalScore = Math.min(technicalScore, 40);
+    let technicalScore = 0;
+    let relevanceScore = 0;
+    let communicationScore = 0;
+    let feedback = '';
+    let keyPointsCovered: string[] = [];
+    let suggestedImprovement = '';
+    let evaluatedWithAzure = false;
 
-    // Answer relevance (0-100)
-    let relevanceScore = Math.round(65 + (coverageRatio * 30));
-    if (lowerTranscript.includes(currentQ.category.toLowerCase())) relevanceScore += 5;
+    // 1. Live Azure AI Evaluation when live keys are configured
+    if (!config.useMockAI) {
+      try {
+        const evalPrompt = `You are a Senior Technical Interviewer evaluating a candidate's spoken response.
+Question: "${currentQ.question}"
+Role: ${session.role} | Category: ${currentQ.category}
+Candidate Answer: "${transcript || 'Candidate provided no audible response.'}"
+Reference Keywords: ${currentQ.idealKeywords.join(', ')}
 
-    // Communication score (0-100) based on structure and length
-    let communicationScore = 75;
-    if (transcript.length > 120) communicationScore += 10;
-    if (transcript.length > 250) communicationScore += 5;
-    if (transcript.length < 30) communicationScore = 50;
+Provide objective, constructive grading. Respond ONLY with a valid JSON object matching this schema:
+{
+  "technicalScore": <integer 0-100>,
+  "relevanceScore": <integer 0-100>,
+  "communicationScore": <integer 0-100>,
+  "feedback": "<2 sentences evaluating the technical depth and clarity>",
+  "keyPointsCovered": ["<key concept candidate mentioned>", "<second key concept>"],
+  "suggestedImprovement": "<actionable recommendation to improve the answer>"
+}`;
 
-    technicalScore = Math.min(98, Math.max(35, technicalScore));
-    relevanceScore = Math.min(98, Math.max(40, relevanceScore));
-    communicationScore = Math.min(96, Math.max(45, communicationScore));
+        const rawJson = await aiService.completePrompt([
+          { role: 'system', content: 'You are an interview grading engine. Return JSON only without code blocks or markdown.' },
+          { role: 'user', content: evalPrompt }
+        ], { temperature: 0.3, maxTokens: 400 });
+
+        if (rawJson) {
+          const cleaned = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
+          const parsed = JSON.parse(cleaned);
+          if (parsed.technicalScore !== undefined && parsed.feedback) {
+            technicalScore = Math.min(99, Math.max(30, Number(parsed.technicalScore)));
+            relevanceScore = Math.min(99, Math.max(30, Number(parsed.relevanceScore || 70)));
+            communicationScore = Math.min(99, Math.max(30, Number(parsed.communicationScore || 70)));
+            feedback = parsed.feedback;
+            keyPointsCovered = Array.isArray(parsed.keyPointsCovered) ? parsed.keyPointsCovered : ['Understood the question premise.'];
+            suggestedImprovement = parsed.suggestedImprovement || 'Discuss time/space trade-offs and edge cases.';
+            evaluatedWithAzure = true;
+          }
+        }
+      } catch (azureErr) {
+        console.warn('[InterviewService] Azure evaluation error, using fallback heuristic:', azureErr);
+      }
+    }
+
+    // 2. Heuristic Rubric Fallback (Mock Mode or Offline Fallback)
+    if (!evaluatedWithAzure) {
+      const matchedKeywords = currentQ.idealKeywords.filter(k => lowerTranscript.includes(k.toLowerCase()));
+      const coverageRatio = currentQ.idealKeywords.length > 0 ? (matchedKeywords.length / currentQ.idealKeywords.length) : 0.7;
+
+      technicalScore = Math.round(55 + (coverageRatio * 40));
+      if (transcript.length < 25) technicalScore = Math.min(technicalScore, 40);
+
+      relevanceScore = Math.round(65 + (coverageRatio * 30));
+      if (lowerTranscript.includes(currentQ.category.toLowerCase())) relevanceScore += 5;
+
+      communicationScore = 75;
+      if (transcript.length > 120) communicationScore += 10;
+      if (transcript.length > 250) communicationScore += 5;
+      if (transcript.length < 30) communicationScore = 50;
+
+      technicalScore = Math.min(98, Math.max(35, technicalScore));
+      relevanceScore = Math.min(98, Math.max(40, relevanceScore));
+      communicationScore = Math.min(96, Math.max(45, communicationScore));
+
+      keyPointsCovered = matchedKeywords.slice(0, 3).map(k => `Addressed key concept: "${k}"`);
+      if (keyPointsCovered.length === 0) {
+        keyPointsCovered.push('Communicated core idea reasonably well.');
+      }
+
+      const missingKeywords = currentQ.idealKeywords.filter(k => !lowerTranscript.includes(k.toLowerCase()));
+      suggestedImprovement = 'Elaborate more on time/space trade-offs and real-world system applications.';
+      if (missingKeywords.length > 0) {
+        suggestedImprovement = `Strengthen your answer by mentioning: ${missingKeywords.slice(0, 2).join(', ')}.`;
+      }
+
+      const overallEst = Math.round((technicalScore * 0.45) + (relevanceScore * 0.35) + (communicationScore * 0.20));
+      feedback = overallEst >= 75
+        ? `Strong explanation! You clearly articulated the concepts of ${currentQ.category}. Your technical vocabulary was solid.`
+        : `Decent attempt. You touched upon basic aspects of ${currentQ.category}, but you can make your response much crisper with concrete examples and complexity details.`;
+    }
 
     const overallQScore = Math.round((technicalScore * 0.45) + (relevanceScore * 0.35) + (communicationScore * 0.20));
 
-    // Construct tailored feedback
-    const keyPointsCovered: string[] = matchedKeywords.slice(0, 3).map(k => `Addressed key concept: "${k}"`);
-    if (keyPointsCovered.length === 0) {
-      keyPointsCovered.push('Communicated core idea reasonably well.');
-    }
-
-    const missingKeywords = currentQ.idealKeywords.filter(k => !lowerTranscript.includes(k.toLowerCase()));
-    let suggestedImprovement = 'Elaborate more on time/space trade-offs and real-world system applications.';
-    if (missingKeywords.length > 0) {
-      suggestedImprovement = `Strengthen your answer by mentioning: ${missingKeywords.slice(0, 2).join(', ')}.`;
-    }
-
-    const feedback = overallQScore >= 75
-      ? `Strong explanation! You clearly articulated the concepts of ${currentQ.category}. Your technical vocabulary was solid.`
-      : `Decent attempt. You touched upon basic aspects of ${currentQ.category}, but you can make your response much crisper with concrete examples and complexity details.`;
 
     // Save answer record
     session.answers.push({

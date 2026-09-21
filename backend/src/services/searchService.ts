@@ -27,7 +27,7 @@ export class SearchService {
   async searchKnowledgeBase(query: string): Promise<SearchResult[]> {
     if (!config.useMockAI && config.azure.search.endpoint && config.azure.search.apiKey) {
       try {
-        // Prepared integration for Azure AI Search
+        // Integration for Azure AI Search
         const searchUrl = `${config.azure.search.endpoint}/indexes/${config.azure.search.indexName}/docs/search?api-version=2023-11-01`;
         const response = await fetch(searchUrl, {
           method: 'POST',
@@ -37,22 +37,22 @@ export class SearchService {
           },
           body: JSON.stringify({
             search: query,
-            top: 3,
-            select: 'title,source,content'
+            top: 3
           })
         });
 
         if (response.ok) {
-          const data = await response.json() as { value?: Array<{ title?: string; source?: string; content?: string; '@search.score'?: number }> };
+          const data = await response.json() as { value?: Array<{ title?: string; source?: string; content?: string; chunk?: string; '@search.score'?: number }> };
           if (data.value && data.value.length > 0) {
             return data.value.map(item => ({
               title: item.title || 'Placement Guide',
-              source: item.source || 'Azure AI Search Index',
-              snippet: (item.content || '').substring(0, 200),
+              source: item.source || item.title || 'Azure AI Search Index',
+              snippet: (item.chunk || item.content || '').substring(0, 300),
               score: item['@search.score'] || 0.9
             }));
           }
         }
+
       } catch (err) {
         console.warn('Azure AI Search query failed, falling back to local knowledge base:', err);
       }

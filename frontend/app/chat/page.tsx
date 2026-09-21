@@ -36,13 +36,7 @@ export default function ChatPage() {
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const sampleRecentConversations = [
-    { title: 'DSA Roadmap & High Frequency Topics', time: 'Yesterday' },
-    { title: 'Array vs Linked List Trade-offs', time: '2 days ago' },
-    { title: 'SQL Joins & Normalization Rules', time: '3 days ago' },
-    { title: 'Process vs Thread Memory Spaces', time: 'Sep 12' },
-  ];
+  const [recentQueries, setRecentQueries] = useState<string[]>([]);
 
   const suggestedQuestions = [
     'What DSA topics should I prepare for campus placements?',
@@ -62,6 +56,8 @@ export default function ChatPage() {
   const handleSend = async (messageText?: string) => {
     const textToSend = messageText || inputMessage;
     if (!textToSend.trim() || isLoading) return;
+
+    setRecentQueries(prev => Array.from(new Set([textToSend.trim(), ...prev])).slice(0, 6));
 
     const userMessageId = 'user-' + Date.now();
     const newUserMsg: ChatMessage = {
@@ -128,47 +124,52 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex-1 flex bg-navy-950">
+    <div className="flex-1 flex bg-black">
       <Sidebar />
 
       {/* Main Chat Interface */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {/* Left Sub-sidebar: Recent Conversations */}
-        <div className="w-full md:w-64 shrink-0 bg-navy-900/60 border-r border-navy-800 p-4 hidden lg:flex flex-col justify-between">
+        <div className="w-full md:w-64 shrink-0 bg-[#060608]/95 border-r border-white/[0.07] p-4 hidden lg:flex flex-col justify-between">
           <div className="space-y-4">
             <button
               onClick={handleNewChat}
-              className="w-full py-2.5 px-3.5 rounded-xl bg-brand-blue/15 hover:bg-brand-blue/25 text-brand-cyan border border-brand-blue/30 text-xs font-semibold flex items-center justify-center gap-2 transition-colors"
+              className="w-full py-2.5 px-3.5 rounded-xl bg-white hover:bg-neutral-200 text-black text-xs font-semibold flex items-center justify-center gap-2 transition-all shadow-sm"
             >
-              <PlusCircle className="w-4 h-4" />
+              <PlusCircle className="w-4 h-4 text-black" />
               <span>New Conversation</span>
             </button>
 
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2 px-1">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400 mb-2 px-1">
                 Recent Queries
               </p>
               <div className="space-y-1">
-                {sampleRecentConversations.map((item, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleSend(item.title)}
-                    className="w-full text-left p-2 rounded-lg hover:bg-navy-800 text-xs text-slate-300 hover:text-white transition-colors group flex items-start gap-2"
-                  >
-                    <MessageSquare className="w-3.5 h-3.5 text-slate-500 group-hover:text-brand-cyan shrink-0 mt-0.5" />
-                    <div className="flex-1 truncate">
-                      <p className="truncate font-medium">{item.title}</p>
-                      <span className="text-[10px] text-slate-500">{item.time}</span>
-                    </div>
-                  </button>
-                ))}
+                {recentQueries.length === 0 ? (
+                  <p className="text-[11px] text-neutral-500 px-1 py-2 italic leading-relaxed">
+                    No recent queries yet. Ask a question to begin!
+                  </p>
+                ) : (
+                  recentQueries.map((title, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleSend(title)}
+                      className="w-full text-left p-2 rounded-lg hover:bg-white/[0.05] text-xs text-neutral-300 hover:text-white transition-colors group flex items-start gap-2"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 text-neutral-500 group-hover:text-purple-400 shrink-0 mt-0.5" />
+                      <div className="flex-1 truncate">
+                        <p className="truncate font-medium">{title}</p>
+                      </div>
+                    </button>
+                  ))
+                )}
               </div>
             </div>
           </div>
 
           {/* RAG Information Pill */}
-          <div className="p-3 bg-navy-950 border border-navy-800 rounded-xl text-xs space-y-1 text-slate-400">
-            <div className="flex items-center gap-1.5 text-brand-cyan font-semibold">
+          <div className="p-3 bg-[#0B0B0F] border border-white/[0.08] rounded-xl text-xs space-y-1 text-neutral-400">
+            <div className="flex items-center gap-1.5 text-purple-400 font-semibold">
               <BookOpen className="w-3.5 h-3.5" />
               <span>Knowledge Grounding</span>
             </div>
@@ -179,11 +180,11 @@ export default function ChatPage() {
         </div>
 
         {/* Center/Main Chat Area */}
-        <div className="flex-1 flex flex-col h-[calc(100vh-4rem)] bg-navy-950">
+        <div className="flex-1 flex flex-col h-[calc(100vh-4rem)] bg-black relative">
           {/* Header */}
-          <div className="h-16 border-b border-navy-800 px-6 flex items-center justify-between bg-navy-900/40">
+          <div className="h-16 border-b border-white/[0.07] px-6 flex items-center justify-between bg-[#060608]/80 backdrop-blur-xl">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-blue to-brand-cyan flex items-center justify-center text-white shadow-md shadow-brand-blue/20">
+              <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/25 flex items-center justify-center text-purple-400 shadow-sm">
                 <Bot className="w-5 h-5" />
               </div>
               <div>
@@ -193,7 +194,7 @@ export default function ChatPage() {
                     Online
                   </span>
                 </h2>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-neutral-400">
                   Placement Preparation Assistant &bull; Grounded in Campus Resources
                 </p>
               </div>
@@ -201,7 +202,7 @@ export default function ChatPage() {
 
             <button
               onClick={handleNewChat}
-              className="text-xs text-slate-400 hover:text-white px-2.5 py-1.5 rounded-lg border border-navy-700 hover:bg-navy-800 flex items-center gap-1.5"
+              className="text-xs text-neutral-400 hover:text-white px-2.5 py-1.5 rounded-lg border border-white/10 hover:bg-white/5 flex items-center gap-1.5 transition-colors"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Reset</span>
@@ -221,8 +222,8 @@ export default function ChatPage() {
                   <div
                     className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center text-xs font-bold ${
                       isUser
-                        ? 'bg-brand-blue text-white shadow-sm'
-                        : 'bg-navy-850 border border-navy-700 text-brand-cyan'
+                        ? 'bg-white text-black shadow-sm'
+                        : 'bg-purple-500/10 border border-purple-500/30 text-purple-400'
                     }`}
                   >
                     {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
@@ -233,8 +234,8 @@ export default function ChatPage() {
                     <div
                       className={`p-4 rounded-2xl text-sm leading-relaxed ${
                         isUser
-                          ? 'bg-brand-blue text-white rounded-tr-none shadow-md shadow-brand-blue/20'
-                          : 'bg-navy-900 border border-navy-700/80 text-slate-200 rounded-tl-none'
+                          ? 'bg-white/[0.09] border border-white/10 text-white rounded-tr-none shadow-sm'
+                          : 'bg-[#0D0D12] border border-white/[0.08] text-neutral-200 rounded-tl-none shadow-sm'
                       }`}
                     >
                       <div className="whitespace-pre-line prose-invert">
@@ -243,11 +244,11 @@ export default function ChatPage() {
 
                       {/* Copy Action Button */}
                       {!isUser && (
-                        <div className="mt-3 pt-2 border-t border-navy-800/80 flex items-center justify-between text-xs text-slate-400">
-                          <span className="text-[11px] text-slate-400">AI Generated Guidance</span>
+                        <div className="mt-3 pt-2 border-t border-white/[0.06] flex items-center justify-between text-xs text-neutral-400">
+                          <span className="text-[11px] text-neutral-500">AI Generated Guidance</span>
                           <button
                             onClick={() => handleCopy(msg.id, msg.content)}
-                            className="flex items-center gap-1 hover:text-slate-200 transition-colors"
+                            className="flex items-center gap-1 hover:text-neutral-200 transition-colors"
                             title="Copy response"
                           >
                             {copiedId === msg.id ? (
@@ -268,16 +269,16 @@ export default function ChatPage() {
 
                     {/* Grounded Sources Display */}
                     {!isUser && msg.sources && msg.sources.length > 0 && (
-                      <div className="bg-navy-900/60 border border-navy-800 rounded-xl p-3 text-xs space-y-1.5">
-                        <div className="flex items-center gap-1.5 text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
-                          <BookOpen className="w-3 h-3 text-brand-cyan" />
+                      <div className="bg-[#0B0B0F] border border-white/[0.08] rounded-xl p-3 text-xs space-y-1.5">
+                        <div className="flex items-center gap-1.5 text-neutral-400 font-semibold uppercase tracking-wider text-[10px]">
+                          <BookOpen className="w-3 h-3 text-purple-400" />
                           <span>Sources Grounded</span>
                         </div>
                         <ul className="flex flex-wrap gap-1.5">
                           {msg.sources.map((src, sIdx) => (
                             <li
                               key={sIdx}
-                              className="px-2 py-0.5 rounded-md bg-navy-850 border border-navy-700/60 text-brand-cyan font-mono text-[11px]"
+                              className="px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.08] text-purple-300 font-mono text-[11px]"
                             >
                               &bull; {src}
                             </li>
@@ -293,15 +294,15 @@ export default function ChatPage() {
             {/* Typing Indicator */}
             {isLoading && (
               <div className="flex gap-3 max-w-xl mr-auto">
-                <div className="w-8 h-8 rounded-lg bg-navy-850 border border-navy-700 text-brand-cyan flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-400 flex items-center justify-center shrink-0">
                   <Bot className="w-4 h-4" />
                 </div>
-                <div className="bg-navy-900 border border-navy-700/80 rounded-2xl rounded-tl-none p-4 flex items-center gap-2">
-                  <span className="text-xs text-slate-400">PlacePrep AI is thinking</span>
+                <div className="bg-[#0D0D12] border border-white/[0.08] rounded-2xl rounded-tl-none p-4 flex items-center gap-2">
+                  <span className="text-xs text-neutral-400">PlacePrep AI is thinking</span>
                   <div className="flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-bounce" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-bounce [animation-delay:0.2s]" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-bounce [animation-delay:0.4s]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-bounce" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-bounce [animation-delay:0.2s]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-bounce [animation-delay:0.4s]" />
                   </div>
                 </div>
               </div>
@@ -333,7 +334,7 @@ export default function ChatPage() {
                 <button
                   key={idx}
                   onClick={() => handleSend(q)}
-                  className="text-xs px-3 py-1.5 rounded-full bg-navy-900 hover:bg-navy-850 border border-navy-700/80 text-slate-300 hover:text-white transition-colors"
+                  className="text-xs px-3 py-1.5 rounded-full bg-[#0E0E14] hover:bg-white/[0.06] border border-white/10 hover:border-purple-500/40 text-neutral-300 hover:text-white transition-all shadow-sm"
                 >
                   {q}
                 </button>
@@ -342,13 +343,13 @@ export default function ChatPage() {
           )}
 
           {/* Chat Input Bar */}
-          <div className="p-4 sm:p-6 border-t border-navy-800 bg-navy-900/60">
+          <div className="p-4 sm:p-6 border-t border-white/[0.07] bg-[#060608]/90 backdrop-blur-xl">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 handleSend();
               }}
-              className="flex items-center gap-2 bg-navy-950 border border-navy-700 rounded-xl p-2 focus-within:border-brand-blue transition-colors shadow-inner"
+              className="flex items-center gap-2 bg-[#0E0E14] border border-white/10 rounded-xl p-2 focus-within:border-purple-500/60 transition-colors shadow-inner"
             >
               <input
                 type="text"
@@ -356,13 +357,13 @@ export default function ChatPage() {
                 onChange={(e) => setInputMessage(e.target.value)}
                 placeholder="Ask PlacePrep anything about DSA, DBMS, OOP, or system design..."
                 disabled={isLoading}
-                className="flex-1 bg-transparent px-3 py-1.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none disabled:opacity-50"
+                className="flex-1 bg-transparent px-3 py-1.5 text-sm text-white placeholder-neutral-500 focus:outline-none disabled:opacity-50"
               />
 
               {/* Speech Microphone Enhancement Icon */}
               <button
                 type="button"
-                className="p-2 rounded-lg text-slate-400 hover:text-brand-cyan hover:bg-navy-850 transition-colors"
+                className="p-2 rounded-lg text-neutral-400 hover:text-purple-400 hover:bg-white/5 transition-colors"
                 title="Voice input (Powered by Azure Speech STT)"
               >
                 <Mic className="w-4 h-4" />
@@ -371,13 +372,13 @@ export default function ChatPage() {
               <button
                 type="submit"
                 disabled={isLoading || !inputMessage.trim()}
-                className="p-2.5 rounded-lg bg-brand-blue hover:bg-blue-600 disabled:opacity-40 text-white font-semibold shadow-sm transition-all"
+                className="p-2.5 rounded-lg bg-white hover:bg-neutral-200 disabled:opacity-30 text-black font-semibold shadow-sm transition-all"
                 title="Send message"
               >
-                <Send className="w-4 h-4" />
+                <Send className="w-4 h-4 text-black" />
               </button>
             </form>
-            <p className="text-[11px] text-center text-slate-400 mt-2">
+            <p className="text-[11px] text-center text-neutral-500 mt-2">
               PlacePrep AI is grounded in placement curriculum. All responses are AI-generated practice guidance.
             </p>
           </div>

@@ -3,10 +3,10 @@
 @tailwind utilities;
 
 :root {
-  --background: #07111F;
-  --foreground: #F8FAFC;
-  --card-bg: #0B1220;
-  --border-color: #1E2D4A;
+  --background: #000000;
+  --foreground: #FFFFFF;
+  --card-bg: #09090D;
+  --border-color: rgba(255, 255, 255, 0.08);
 }
 
 body {
@@ -17,48 +17,95 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Custom modern scrollbars */
+/* Custom modern sleek scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #07111F;
+  background: #000000;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1E2D4A;
+  background: #27272A;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2563EB;
+  background: #A855F7;
 }
 
 /* Glassmorphism & Card Utilities */
 .card-surface {
-  background-color: #0B1220;
-  border: 1px solid #1E2D4A;
-  border-radius: 0.75rem;
+  background-color: rgba(14, 14, 18, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
 }
 
 .card-elevated {
-  background-color: #0E1729;
-  border: 1px solid #233558;
-  border-radius: 0.75rem;
-  transition: all 0.2s ease-in-out;
+  background-color: rgba(18, 18, 24, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 1rem;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .card-elevated:hover {
-  border-color: #2563EB;
+  border-color: rgba(168, 85, 247, 0.4);
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 16px 36px -10px rgba(168, 85, 247, 0.18);
+}
+
+/* Ambient Purple Glow Gradient */
+.ambient-purple-glow {
+  position: absolute;
+  top: -10%;
+  right: -5%;
+  width: 750px;
+  height: 750px;
+  background: radial-gradient(
+    circle at center,
+    rgba(168, 85, 247, 0.38) 0%,
+    rgba(147, 51, 234, 0.22) 30%,
+    rgba(126, 34, 206, 0.08) 55%,
+    transparent 75%
+  );
+  filter: blur(70px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ambient-center-glow {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 400px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(168, 85, 247, 0.15) 0%,
+    rgba(139, 92, 246, 0.06) 45%,
+    transparent 70%
+  );
+  filter: blur(90px);
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* Glowing text and badge accents */
 .text-gradient-primary {
-  background: linear-gradient(135deg, #60A5FA 0%, #2563EB 50%, #06B6D4 100%);
+  background: linear-gradient(135deg, #FFFFFF 0%, #E2E8F0 50%, #A855F7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-purple {
+  background: linear-gradient(135deg, #E9D5FF 0%, #C084FC 50%, #A855F7 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }

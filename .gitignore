@@ -10,6 +10,7 @@ out/
 # Production / Build
 dist/
 build/
+*.tsbuildinfo
 
 # Environment Variables
 .env
@@ -34,3 +35,4 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+.ua/
