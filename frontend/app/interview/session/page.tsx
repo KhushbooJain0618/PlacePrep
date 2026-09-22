@@ -131,6 +131,13 @@ function InterviewSessionContent() {
 
         recognition.onerror = (e: any) => {
           console.warn('Browser Speech recognition error or unsupported:', e);
+          if (e.error === 'not-allowed') {
+            setError('Microphone access was blocked. Please click the camera/microphone or lock icon in your browser address bar to allow microphone access.');
+          } else if (e.error === 'no-speech') {
+            // Silence timeout, ignore
+          } else {
+            setError(`Speech recognition notice: ${e.error || 'Check microphone connection'}`);
+          }
         };
 
         recognitionRef.current = recognition;
@@ -144,8 +151,22 @@ function InterviewSessionContent() {
     return `${mins.toString().padStart(2, '0')}:${remaining.toString().padStart(2, '0')}`;
   };
 
-  const handleStartAnswer = () => {
+  const handleStartAnswer = async () => {
     setError(null);
+
+    // Explicitly prompt the browser for microphone permission via getUserMedia
+    if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
+      try {
+        const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Release the temporary stream so SpeechRecognition can acquire the audio device
+        audioStream.getTracks().forEach(track => track.stop());
+      } catch (micErr: any) {
+        console.warn('Microphone permission request failed:', micErr);
+        setError('Microphone access was denied or not found. Please click the padlock / camera icon in your browser address bar to allow microphone permissions, or type your answer directly in the box below.');
+        return;
+      }
+    }
+
     setCurrentState('RECORDING');
     setTranscript('');
 
@@ -329,6 +350,17 @@ function InterviewSessionContent() {
               </div>
             )}
 
+            {/* Error / Permission notification */}
+            {error && (
+              <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-300 flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                <div className="flex-1 space-y-1">
+                  <p className="font-semibold text-red-200">Microphone Notice</p>
+                  <p className="leading-relaxed">{error}</p>
+                </div>
+              </div>
+            )}
+
             {/* Live Transcript / Candidate Input Field */}
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs text-neutral-400">
@@ -419,7 +451,18 @@ function InterviewSessionContent() {
               isCameraActive={isCameraActive}
               isMicActive={isMicActive}
               onToggleCamera={() => setIsCameraActive(!isCameraActive)}
-              onToggleMic={() => setIsMicActive(!isMicActive)}
+              onToggleMic={async () => {
+                const nextMic = !isMicActive;
+                setIsMicActive(nextMic);
+                if (nextMic && typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
+                  try {
+                    const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    s.getTracks().forEach(t => t.stop());
+                  } catch (err) {
+                    console.warn('Microphone permission error on toggle:', err);
+                  }
+                }
+              }}
             />
           </div>
 

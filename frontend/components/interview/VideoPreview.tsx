@@ -23,21 +23,36 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({
   useEffect(() => {
     let localStream: MediaStream | null = null;
 
-    async function initCamera() {
-      if (isCameraActive) {
+    async function initMedia() {
+      if (isCameraActive || isMicActive) {
         try {
           localStream = await navigator.mediaDevices.getUserMedia({
-            video: { width: 640, height: 480 },
-            audio: false
+            video: isCameraActive ? { width: 640, height: 480 } : false,
+            audio: isMicActive,
           });
           setStream(localStream);
           setHasPermission(true);
-          if (videoRef.current) {
+          if (videoRef.current && isCameraActive) {
             videoRef.current.srcObject = localStream;
           }
         } catch (err) {
-          console.warn('Camera access not granted or not available, using simulated visual feed:', err);
-          setHasPermission(false);
+          // If combined request fails (e.g. user has camera but no mic or vice-versa), try video only
+          try {
+            if (isCameraActive) {
+              localStream = await navigator.mediaDevices.getUserMedia({
+                video: { width: 640, height: 480 },
+                audio: false,
+              });
+              setStream(localStream);
+              setHasPermission(true);
+              if (videoRef.current) {
+                videoRef.current.srcObject = localStream;
+              }
+            }
+          } catch (camErr) {
+            console.warn('Media access not granted or not available, using simulated visual feed:', camErr);
+            setHasPermission(false);
+          }
         }
       } else {
         if (stream) {
@@ -47,14 +62,14 @@ export const VideoPreview: React.FC<VideoPreviewProps> = ({
       }
     }
 
-    initCamera();
+    initMedia();
 
     return () => {
       if (localStream) {
         localStream.getTracks().forEach(track => track.stop());
       }
     };
-  }, [isCameraActive]);
+  }, [isCameraActive, isMicActive]);
 
   return (
     <div className="relative bg-[#060608] border border-white/[0.08] rounded-2xl overflow-hidden aspect-video flex flex-col items-center justify-center shadow-lg">
