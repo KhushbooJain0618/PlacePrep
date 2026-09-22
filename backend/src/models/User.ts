@@ -1,4 +1,4 @@
-import { getSupabase, isSupabaseConnected } from '../config/supabase.js';
+import { getSupabase, isSupabaseConnected, isUuid } from '../config/supabase.js';
 
 export interface IUser {
   id: string;
@@ -81,6 +81,7 @@ export const User = {
     if (filter.email) {
       query = query.eq('email', filter.email.toLowerCase().trim());
     } else if (filter.id) {
+      if (!isUuid(filter.id)) return null;
       query = query.eq('id', filter.id);
     } else {
       return null;
@@ -127,6 +128,7 @@ export const User = {
    * Update student profile fields by user ID
    */
   async findByIdAndUpdate(id: string, updates: Partial<IUser>): Promise<IUser | null> {
+    if (!isUuid(id)) return null;
     const supabase = getSupabase();
     if (!supabase || !isSupabaseConnected()) return null;
 

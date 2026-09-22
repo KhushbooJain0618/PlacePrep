@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { User, IUser } from '../models/User.js';
 import { config } from '../config/env.js';
 import { isSupabaseConnected } from '../config/supabase.js';
@@ -90,7 +91,7 @@ authRouter.post('/register', async (req: any, res: Response): Promise<void> => {
 
     // Dev Fallback Mode if Supabase database is not currently active
     const fallbackUser = {
-      id: `usr_${Date.now()}`,
+      id: crypto.randomUUID(),
       name: name.trim(),
       email: normalizedEmail,
       targetRole: targetRole || 'Software Engineer',
@@ -138,7 +139,15 @@ authRouter.post('/login', async (req: any, res: Response): Promise<void> => {
     if (isSupabaseConnected()) {
       try {
         const user = await User.findOne({ email: normalizedEmail });
-        if (user && user.password) {
+        if (!user) {
+          res.status(401).json({
+            error: 'InvalidCredentials',
+            message: 'No account found with this email. Please check your credentials or create an account.',
+          });
+          return;
+        }
+
+        if (user.password) {
           const isMatch = await bcrypt.compare(password, user.password);
           if (!isMatch) {
             res.status(401).json({ error: 'InvalidCredentials', message: 'Invalid email or password' });
@@ -165,8 +174,9 @@ authRouter.post('/login', async (req: any, res: Response): Promise<void> => {
     }
 
     // Dev Fallback Mode if Supabase database is not currently active
+    const DEMO_USER_ID = '00000000-0000-0000-0000-000000000001';
     const fallbackUser = {
-      id: 'usr_demo_student',
+      id: DEMO_USER_ID,
       name: 'Demo Student',
       email: normalizedEmail,
       targetRole: 'Software Developer',
@@ -195,6 +205,8 @@ authRouter.post('/login', async (req: any, res: Response): Promise<void> => {
   }
 });
 
+const DEMO_USER_ID = '00000000-0000-0000-0000-000000000001';
+
 /**
  * GET /api/auth/me
  * Get current student profile
@@ -221,7 +233,7 @@ authRouter.get('/me', requireAuth, async (req: AuthenticatedRequest, res: Respon
     // Fallback user based on token payload
     res.json({
       user: {
-        id: req.user.userId || 'usr_demo_student',
+        id: req.user.userId || DEMO_USER_ID,
         name: req.user.name || 'Demo Student',
         email: req.user.email || 'student@placeprep.ai',
         targetRole: req.user.targetRole || 'Software Developer',
@@ -235,7 +247,7 @@ authRouter.get('/me', requireAuth, async (req: AuthenticatedRequest, res: Respon
   } catch (err: any) {
     res.json({
       user: {
-        id: req.user?.userId || 'usr_demo_student',
+        id: req.user?.userId || DEMO_USER_ID,
         name: req.user?.name || 'Demo Student',
         email: req.user?.email || 'student@placeprep.ai',
         targetRole: req.user?.targetRole || 'Software Developer',

@@ -68,3 +68,11 @@ export const isSupabaseConnected = (): boolean => {
 export const getSupabase = (): SupabaseClient | null => {
   return supabaseClient;
 };
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/**
+ * Validate whether a string is a valid UUID before passing to PostgreSQL
+ */
+export const isUuid = (id?: string | null): boolean => {
+  return typeof id === 'string' && UUID_REGEX.test(id);
+};

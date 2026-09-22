@@ -1,4 +1,4 @@
-import { getSupabase, isSupabaseConnected } from '../config/supabase.js';
+import { getSupabase, isSupabaseConnected, isUuid } from '../config/supabase.js';
 import { RoadmapGenerateResponse } from './types.js';
 
 export interface RoadmapHistoryRow {
@@ -30,6 +30,7 @@ const rowToRoadmap = (row: RoadmapHistoryRow): RoadmapGenerateResponse & { id: s
 
 export const RoadmapHistory = {
   async create(userId: string, roadmap: RoadmapGenerateResponse): Promise<string | null> {
+    if (!isUuid(userId)) return null;
     const supabase = getSupabase();
     if (!supabase || !isSupabaseConnected()) return null;
 
@@ -56,6 +57,7 @@ export const RoadmapHistory = {
   },
 
   async getLatestByUser(userId: string) {
+    if (!isUuid(userId)) return null;
     const supabase = getSupabase();
     if (!supabase || !isSupabaseConnected()) return null;
 
@@ -75,6 +77,7 @@ export const RoadmapHistory = {
   },
 
   async findByUser(userId: string, limit = 10) {
+    if (!isUuid(userId)) return [];
     const supabase = getSupabase();
     if (!supabase || !isSupabaseConnected()) return [];
 

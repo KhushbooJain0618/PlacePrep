@@ -1,4 +1,4 @@
-import { getSupabase, isSupabaseConnected } from '../config/supabase.js';
+import { getSupabase, isSupabaseConnected, isUuid } from '../config/supabase.js';
 
 export interface IConversation {
   id: string;
@@ -26,6 +26,7 @@ const rowToConversation = (row: ConversationRow): IConversation => ({
 
 export const Conversation = {
   async findByUser(userId: string): Promise<IConversation[]> {
+    if (!isUuid(userId)) return [];
     const supabase = getSupabase();
     if (!supabase || !isSupabaseConnected()) return [];
 
@@ -43,6 +44,7 @@ export const Conversation = {
   },
 
   async findById(id: string): Promise<IConversation | null> {
+    if (!isUuid(id)) return null;
     const supabase = getSupabase();
     if (!supabase || !isSupabaseConnected()) return null;
 
@@ -60,6 +62,7 @@ export const Conversation = {
   },
 
   async create(userId: string, title: string): Promise<IConversation | null> {
+    if (!isUuid(userId)) return null;
     const supabase = getSupabase();
     if (!supabase || !isSupabaseConnected()) return null;
 

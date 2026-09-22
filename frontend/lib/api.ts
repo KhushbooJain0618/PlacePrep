@@ -86,6 +86,8 @@ async function safeFetch<T>(endpoint: string, options: RequestInit = {}): Promis
   }
 }
 
+let inFlightGetMe: Promise<{ user: StudentUser | null }> | null = null;
+
 export const api = {
   // Authentication & Profile APIs
   async register(data: RegisterRequest): Promise<AuthResponse> {
@@ -120,17 +122,27 @@ export const api = {
       return { user: cached || null };
     }
 
-    try {
-      const res = await safeFetch<{ user: StudentUser }>('/auth/me', {
-        method: 'GET',
-      });
-      if (res.user) {
-        authStorage.setUser(res.user);
-      }
-      return res;
-    } catch {
-      return { user: cached || null };
+    if (inFlightGetMe) {
+      return inFlightGetMe;
     }
+
+    inFlightGetMe = (async () => {
+      try {
+        const res = await safeFetch<{ user: StudentUser }>('/auth/me', {
+          method: 'GET',
+        });
+        if (res.user) {
+          authStorage.setUser(res.user);
+        }
+        return res;
+      } catch {
+        return { user: cached || null };
+      } finally {
+        inFlightGetMe = null;
+      }
+    })();
+
+    return inFlightGetMe;
   },
 
   async updateProfile(data: UpdateProfileRequest): Promise<{ message: string; user: StudentUser }> {
