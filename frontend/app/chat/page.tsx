@@ -124,11 +124,11 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex-1 flex bg-black">
+    <div className="flex-1 flex bg-black min-h-0">
       <Sidebar />
 
       {/* Main Chat Interface */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
         {/* Left Sub-sidebar: Recent Conversations */}
         <div className="w-full md:w-64 shrink-0 bg-[#060608]/95 border-r border-white/[0.07] p-4 hidden lg:flex flex-col justify-between">
           <div className="space-y-4">
@@ -180,7 +180,7 @@ export default function ChatPage() {
         </div>
 
         {/* Center/Main Chat Area */}
-        <div className="flex-1 flex flex-col h-[calc(100vh-4rem)] bg-black relative">
+        <div className="flex-1 flex flex-col h-full min-h-0 bg-black relative">
           {/* Header */}
           <div className="h-16 border-b border-white/[0.07] px-6 flex items-center justify-between bg-[#060608]/80 backdrop-blur-xl">
             <div className="flex items-center gap-3">
@@ -210,7 +210,7 @@ export default function ChatPage() {
           </div>
 
           {/* Messages Feed */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 min-h-0">
             {messages.map((msg) => {
               const isUser = msg.role === 'user';
               return (

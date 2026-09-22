@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Navbar } from '../components/layout/Navbar';
+import { PageTransition } from '../components/layout/PageTransition';
+import { NavProgress } from '../components/layout/NavProgress';
 
 export const metadata: Metadata = {
   title: 'PlacePrep — AI-Powered Campus Placement Preparation Assistant',
@@ -21,10 +23,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className="min-h-screen bg-black text-white flex flex-col selection:bg-purple-600 selection:text-white antialiased">
+      <body className="min-h-screen bg-[#07111F] bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(139,92,246,0.15),transparent)] text-white flex flex-col selection:bg-purple-600 selection:text-white antialiased">
+        <NavProgress />
         <Navbar />
         <main className="flex-1 flex flex-col">
-          {children}
+          <PageTransition>{children}</PageTransition>
         </main>
       </body>
     </html>
