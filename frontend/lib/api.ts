@@ -31,7 +31,8 @@ export const authStorage = {
     if (typeof window === 'undefined') return;
     localStorage.setItem(TOKEN_KEY, token);
     if (typeof document !== 'undefined') {
-      document.cookie = `${TOKEN_KEY}=${encodeURIComponent(token)}; path=/; max-age=2592000; SameSite=Lax`;
+      const isHttps = window.location.protocol === 'https:';
+      document.cookie = `${TOKEN_KEY}=${encodeURIComponent(token)}; path=/; max-age=2592000; SameSite=Lax${isHttps ? '; Secure' : ''}`;
     }
   },
   getUser: (): StudentUser | null => {

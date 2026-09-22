@@ -33,10 +33,9 @@ export default function LoginPage() {
       const redirect = typeof window !== 'undefined'
         ? new URLSearchParams(window.location.search).get('redirect')
         : null;
-      router.push(redirect && redirect.startsWith('/') ? redirect : '/dashboard');
+      window.location.href = redirect && redirect.startsWith('/') ? redirect : '/dashboard';
     } catch (err: any) {
       setError(err.message || 'Invalid credentials. Please try again.');
-    } finally {
       setIsLoading(false);
     }
   };
@@ -54,10 +53,9 @@ export default function LoginPage() {
       const redirect = typeof window !== 'undefined'
         ? new URLSearchParams(window.location.search).get('redirect')
         : null;
-      router.push(redirect && redirect.startsWith('/') ? redirect : '/dashboard');
+      window.location.href = redirect && redirect.startsWith('/') ? redirect : '/dashboard';
     } catch (err: any) {
       setError(err.message || 'Demo sign-in failed.');
-    } finally {
       setIsLoading(false);
     }
   };

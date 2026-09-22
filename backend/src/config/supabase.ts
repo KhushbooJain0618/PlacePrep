@@ -3,6 +3,7 @@ import { config } from './env.js';
 
 let supabaseClient: SupabaseClient | null = null;
 let supabaseConnected = false;
+let supabaseTablesReady = false;
 
 /**
  * Initialize Supabase client and probe connection
@@ -14,6 +15,7 @@ export const initSupabase = async (): Promise<boolean> => {
       console.warn('   Note: Backend will run in offline/mock database mode.');
       console.warn('   To connect to live Supabase, configure SUPABASE_URL & SUPABASE_SECRET_KEY in backend/.env');
       supabaseConnected = false;
+      supabaseTablesReady = false;
       return false;
     }
 
@@ -35,17 +37,20 @@ export const initSupabase = async (): Promise<boolean> => {
       if (error.code === '42P01') {
         console.warn('[Supabase] Connected to Supabase project, but "users" table was not found.');
         console.warn('   Please execute "backend/supabase-schema.sql" in your Supabase SQL Editor to initialize tables.');
-        supabaseConnected = true; // Connection works, schema needs to be initialized
+        supabaseConnected = true;
+        supabaseTablesReady = false;
         return true;
       }
       throw error;
     }
 
     supabaseConnected = true;
-    console.log(`[Supabase] Connected successfully to Supabase: ${config.supabase.url}`);
+    supabaseTablesReady = true;
+    console.log(`[Supabase] Connected successfully to Supabase with initialized tables: ${config.supabase.url}`);
     return true;
   } catch (error: any) {
     supabaseConnected = false;
+    supabaseTablesReady = false;
     console.warn('----------------------------------------------------');
     console.warn(`[Supabase] Connection test failed: ${error.message || error}`);
     console.warn('   Note: Server will continue running in offline/mock database mode.');
@@ -60,6 +65,13 @@ export const initSupabase = async (): Promise<boolean> => {
  */
 export const isSupabaseConnected = (): boolean => {
   return supabaseConnected && supabaseClient !== null;
+};
+
+/**
+ * Check if required database tables (users, etc.) exist in Supabase
+ */
+export const areSupabaseTablesReady = (): boolean => {
+  return isSupabaseConnected() && supabaseTablesReady;
 };
 
 /**

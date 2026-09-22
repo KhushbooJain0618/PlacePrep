@@ -43,10 +43,9 @@ export default function SignupPage() {
       const redirect = typeof window !== 'undefined'
         ? new URLSearchParams(window.location.search).get('redirect')
         : null;
-      router.push(redirect && redirect.startsWith('/') ? redirect : '/dashboard');
+      window.location.href = redirect && redirect.startsWith('/') ? redirect : '/dashboard';
     } catch (err: any) {
       setError(err.message || 'Failed to create account. Please try again.');
-    } finally {
       setIsLoading(false);
     }
   };

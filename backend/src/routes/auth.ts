@@ -4,10 +4,28 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { User, IUser } from '../models/User.js';
 import { config } from '../config/env.js';
-import { isSupabaseConnected } from '../config/supabase.js';
+import { isSupabaseConnected, areSupabaseTablesReady } from '../config/supabase.js';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth.js';
 
 export const authRouter = Router();
+
+// In-memory user cache for mock mode / dev fallback
+const mockUsers = new Map<string, any>();
+
+// Default demo credentials
+const DEMO_USER_ID = '00000000-0000-0000-0000-000000000001';
+mockUsers.set('student@college.edu', {
+  id: DEMO_USER_ID,
+  name: 'Demo Student',
+  email: 'student@college.edu',
+  password: bcrypt.hashSync('password123', 10),
+  targetRole: 'Software Developer',
+  collegeYear: 'Final Year',
+  preparationProgress: 65,
+  dailyStreak: 3,
+  interviewsCompleted: 2,
+  topicsCovered: 14,
+});
 
 // Helper to generate JWT
 const generateToken = (payload: { userId: string; email: string; name: string; targetRole: string }): string => {
@@ -16,7 +34,7 @@ const generateToken = (payload: { userId: string; email: string; name: string; t
 
 // Helper to format user for client consumption
 const formatUser = (user: IUser | any) => ({
-  id: user.id || user._id?.toString() || 'usr_demo_1',
+  id: user.id || user._id?.toString() || DEMO_USER_ID,
   name: user.name,
   email: user.email,
   targetRole: user.targetRole,
@@ -47,8 +65,17 @@ authRouter.post('/register', async (req: any, res: Response): Promise<void> => {
 
     const normalizedEmail = email.toLowerCase().trim();
 
-    // If Supabase is connected, persist to PostgreSQL
-    if (isSupabaseConnected()) {
+    // If Supabase is connected but tables haven't been run, inform the user explicitly
+    if (isSupabaseConnected() && !areSupabaseTablesReady()) {
+      res.status(503).json({
+        error: 'DatabaseSchemaMissing',
+        message: "Supabase database tables are not initialized yet. Please execute 'backend/supabase-schema.sql' in your Supabase SQL Editor.",
+      });
+      return;
+    }
+
+    // If Supabase is connected and ready, persist to PostgreSQL
+    if (isSupabaseConnected() && areSupabaseTablesReady()) {
       try {
         const existingUser = await User.findOne({ email: normalizedEmail });
         if (existingUser) {
@@ -85,15 +112,28 @@ authRouter.post('/register', async (req: any, res: Response): Promise<void> => {
         });
         return;
       } catch (dbErr: any) {
-        console.warn('[Auth Register] Supabase query failed, falling back to mock storage:', dbErr.message);
+        console.warn('[Auth Register] Supabase create error:', dbErr.message);
+        res.status(500).json({
+          error: 'RegistrationFailed',
+          message: dbErr.message || 'Failed to persist account to database. Please check Supabase schema.',
+        });
+        return;
       }
     }
 
-    // Dev Fallback Mode if Supabase database is not currently active
+    // Fallback: in-memory mock storage (when Supabase is offline)
+    if (mockUsers.has(normalizedEmail)) {
+      res.status(400).json({ error: 'UserExists', message: 'An account with this email already exists' });
+      return;
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
     const fallbackUser = {
       id: crypto.randomUUID(),
       name: name.trim(),
       email: normalizedEmail,
+      password: hashedPassword,
       targetRole: targetRole || 'Software Engineer',
       collegeYear: collegeYear || 'Final Year (Class of 2026)',
       preparationProgress: 0,
@@ -101,6 +141,8 @@ authRouter.post('/register', async (req: any, res: Response): Promise<void> => {
       interviewsCompleted: 0,
       topicsCovered: 0,
     };
+
+    mockUsers.set(normalizedEmail, fallbackUser);
 
     const token = generateToken({
       userId: fallbackUser.id,
@@ -110,9 +152,9 @@ authRouter.post('/register', async (req: any, res: Response): Promise<void> => {
     });
 
     res.status(201).json({
-      message: 'Account created successfully (Dev Mock DB Mode)',
+      message: 'Account created successfully',
       token,
-      user: fallbackUser,
+      user: formatUser(fallbackUser),
     });
   } catch (err: any) {
     console.error('[Auth Register Error]:', err);
@@ -135,8 +177,17 @@ authRouter.post('/login', async (req: any, res: Response): Promise<void> => {
 
     const normalizedEmail = email.toLowerCase().trim();
 
-    // If Supabase is connected, verify against database
-    if (isSupabaseConnected()) {
+    // If Supabase is connected but tables haven't been run, inform user
+    if (isSupabaseConnected() && !areSupabaseTablesReady()) {
+      res.status(503).json({
+        error: 'DatabaseSchemaMissing',
+        message: "Supabase database tables are not initialized yet. Please execute 'backend/supabase-schema.sql' in your Supabase SQL Editor.",
+      });
+      return;
+    }
+
+    // If Supabase is connected and ready, verify against database
+    if (isSupabaseConnected() && areSupabaseTablesReady()) {
       try {
         const user = await User.findOne({ email: normalizedEmail });
         if (!user) {
@@ -169,43 +220,45 @@ authRouter.post('/login', async (req: any, res: Response): Promise<void> => {
           return;
         }
       } catch (dbErr: any) {
-        console.warn('[Auth Login] Supabase query failed, falling back to mock authentication:', dbErr.message);
+        console.warn('[Auth Login] Supabase error:', dbErr.message);
+        res.status(500).json({ error: 'LoginFailed', message: dbErr.message || 'Database error during authentication' });
+        return;
       }
     }
 
-    // Dev Fallback Mode if Supabase database is not currently active
-    const DEMO_USER_ID = '00000000-0000-0000-0000-000000000001';
-    const fallbackUser = {
-      id: DEMO_USER_ID,
-      name: 'Demo Student',
-      email: normalizedEmail,
-      targetRole: 'Software Developer',
-      collegeYear: '',
-      preparationProgress: 0,
-      dailyStreak: 0,
-      interviewsCompleted: 0,
-      topicsCovered: 0,
-    };
+    // Fallback: verify against in-memory mock users
+    const mockUser = mockUsers.get(normalizedEmail);
+    if (!mockUser) {
+      res.status(401).json({
+        error: 'InvalidCredentials',
+        message: 'No account found with this email. Please create an account first.',
+      });
+      return;
+    }
+
+    const isMatch = await bcrypt.compare(password, mockUser.password);
+    if (!isMatch) {
+      res.status(401).json({ error: 'InvalidCredentials', message: 'Invalid email or password' });
+      return;
+    }
 
     const token = generateToken({
-      userId: fallbackUser.id,
-      email: fallbackUser.email,
-      name: fallbackUser.name,
-      targetRole: fallbackUser.targetRole,
+      userId: mockUser.id,
+      email: mockUser.email,
+      name: mockUser.name,
+      targetRole: mockUser.targetRole,
     });
 
     res.json({
-      message: 'Sign in successful (Dev Mock DB Mode)',
+      message: 'Sign in successful',
       token,
-      user: fallbackUser,
+      user: formatUser(mockUser),
     });
   } catch (err: any) {
     console.error('[Auth Login Error]:', err);
     res.status(500).json({ error: 'LoginFailed', message: err.message || 'Failed to sign in' });
   }
 });
-
-const DEMO_USER_ID = '00000000-0000-0000-0000-000000000001';
 
 /**
  * GET /api/auth/me
