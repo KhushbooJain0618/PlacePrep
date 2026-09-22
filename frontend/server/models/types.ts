@@ -1,39 +1,31 @@
-// Frontend TypeScript definitions for PlacePrep
+// Shared TypeScript Models for PlacePrep Server
 
 export type DifficultyLevel = 'Beginner' | 'Intermediate' | 'Advanced';
 export type InterviewType = 'Technical' | 'HR' | 'Mixed';
 
 export interface ChatMessage {
   id: string;
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: string;
   sources?: string[];
 }
 
+export interface ChatRequest {
+  message: string;
+  history?: { role: 'user' | 'assistant'; content: string }[];
+}
+
 export interface ChatResponse {
   answer: string;
   sources: string[];
-  conversationId?: string;
-}
-export interface ConversationSummary {
-  id: string;
-  title: string;
-  updatedAt: string;
 }
 
-export interface ConversationDetail {
-  conversation: {
-    id: string;
-    title: string;
-  };
-  messages: {
-    id: string;
-    role: 'user' | 'assistant';
-    content: string;
-    sources?: string[];
-    createdAt: string;
-  }[];
+export interface InterviewStartRequest {
+  role: string;
+  difficulty: DifficultyLevel;
+  type: InterviewType;
+  questions: number;
 }
 
 export interface InterviewStartResponse {
@@ -49,6 +41,18 @@ export interface InterviewStartResponse {
   hint?: string;
 }
 
+export interface InterviewAnswerRequest {
+  sessionId: string;
+  questionId: string;
+  transcript: string;
+  durationSeconds?: number;
+  visionSignalSummary?: {
+    faceCenteredScore: number;
+    lightingQuality: 'good' | 'fair' | 'poor';
+    interactionActive: boolean;
+  };
+}
+
 export interface InterviewAnswerResponse {
   score: number;
   feedback: string;
@@ -62,8 +66,6 @@ export interface InterviewAnswerResponse {
     hint?: string;
   };
   isCompleted: boolean;
-  transcript?: string;
-  visionNotice?: string;
 }
 
 export interface QuestionReview {
@@ -75,6 +77,10 @@ export interface QuestionReview {
   score: number;
   feedback: string;
   idealAnswerHighlights: string[];
+}
+
+export interface InterviewFinishRequest {
+  sessionId: string;
 }
 
 export interface InterviewFinishResponse {
@@ -91,6 +97,14 @@ export interface InterviewFinishResponse {
   difficulty: DifficultyLevel;
   completedAt: string;
   aiDisclaimer: string;
+}
+
+export interface RoadmapGenerateRequest {
+  role: string;
+  level: DifficultyLevel;
+  dailyHours: number;
+  duration: number;
+  topics: string[];
 }
 
 export interface RoadmapTask {
@@ -128,39 +142,14 @@ export interface RoadmapGenerateResponse {
   createdAt: string;
 }
 
-export interface StudentUser {
+export interface StudentProfile {
   id: string;
   name: string;
   email: string;
   targetRole: string;
-  collegeYear?: string;
   preparationProgress: number;
+  daysRemaining: number;
   dailyStreak: number;
   interviewsCompleted: number;
   topicsCovered: number;
-}
-
-export interface AuthResponse {
-  message: string;
-  token: string;
-  user: StudentUser;
-}
-
-export interface RegisterRequest {
-  name: string;
-  email: string;
-  password: string;
-  targetRole?: string;
-  collegeYear?: string;
-}
-
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface UpdateProfileRequest {
-  name?: string;
-  targetRole?: string;
-  collegeYear?: string;
 }

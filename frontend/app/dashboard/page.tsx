@@ -387,7 +387,7 @@ export default function DashboardPage() {
                   </span>
                 </h3>
                 <p className="text-[11px] text-neutral-400 mt-0.5">
-                  Keys managed in <code className="text-purple-300 font-mono">backend/.env</code>
+                  Keys managed in <code className="text-purple-300 font-mono">.env.local</code>
                 </p>
               </div>
             </div>

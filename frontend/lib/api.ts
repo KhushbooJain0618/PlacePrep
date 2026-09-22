@@ -12,8 +12,7 @@ import {
   ConversationSummary,
   ConversationDetail
 } from '../types';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? '/api' : 'http://localhost:5000/api');
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
 const TOKEN_KEY = 'placeprep_token';
 const USER_KEY = 'placeprep_user';
 
@@ -88,6 +87,7 @@ async function safeFetch<T>(endpoint: string, options: RequestInit = {}): Promis
 }
 
 let inFlightGetMe: Promise<{ user: StudentUser | null }> | null = null;
+let activeAudio: HTMLAudioElement | null = null;
 
 export const api = {
   // Authentication & Profile APIs
@@ -277,8 +277,23 @@ export const api = {
     });
   },
 
+  stopQuestionSpeech(): void {
+    if (activeAudio) {
+      try {
+        activeAudio.pause();
+        activeAudio.currentTime = 0;
+      } catch {}
+      activeAudio = null;
+    }
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+  },
+
   // Audio Text-To-Speech from Azure Speech (with browser fallback)
-  async playQuestionSpeech(text: string): Promise<boolean> {
+  async playQuestionSpeech(text: string, onEnd?: () => void): Promise<boolean> {
+    this.stopQuestionSpeech();
+
     try {
       const res = await fetch(`${API_BASE}/azure/tts`, {
         method: 'POST',
@@ -289,6 +304,15 @@ export const api = {
         const blob = await res.blob();
         const audioUrl = URL.createObjectURL(blob);
         const audio = new Audio(audioUrl);
+        activeAudio = audio;
+        audio.onended = () => {
+          activeAudio = null;
+          onEnd?.();
+        };
+        audio.onerror = () => {
+          activeAudio = null;
+          onEnd?.();
+        };
         await audio.play();
         return true;
       }
@@ -302,10 +326,11 @@ export const api = {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 1.0;
       utterance.pitch = 1.0;
+      utterance.onend = () => onEnd?.();
+      utterance.onerror = () => onEnd?.();
       window.speechSynthesis.speak(utterance);
       return true;
     }
     return false;
   }
 };
-
