@@ -172,7 +172,15 @@ PlacePrep adheres to strict responsible and ethical AI guidelines:
 
 ---
 
-## 10. Future Improvements
+## 10. Deployment (Vercel)
+
+PlacePrep is configured for seamless deployment of both frontend (Next.js) and backend (Express serverless) on Vercel.
+
+- See the complete step-by-step guide: **[docs/vercel-deployment.md](docs/vercel-deployment.md)**.
+
+---
+
+## 11. Future Improvements
 
 - Institutional admin dashboard for college placement officers to view aggregate readiness trends across student cohorts.
 - Native Microsoft Entra ID (Azure AD) campus login integration.

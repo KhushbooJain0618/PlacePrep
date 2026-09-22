@@ -13,7 +13,7 @@ import {
   ConversationDetail
 } from '../types';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? '/api' : 'http://localhost:5000/api');
 const TOKEN_KEY = 'placeprep_token';
 const USER_KEY = 'placeprep_user';
 
