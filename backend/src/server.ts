@@ -34,7 +34,9 @@ app.use('/api/chat', aiLimiter);
 app.use('/api/interview/start', aiLimiter);
 app.use('/api/interview/answer', aiLimiter);
 app.use('/api/azure/tts', aiLimiter);
-
+import { conversationsRouter } from './routes/conversations.js';
+// ...
+app.use('/api/conversations', conversationsRouter);
 // Request logging in development
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);

@@ -8,7 +8,9 @@ import {
   AuthResponse,
   RegisterRequest,
   LoginRequest,
-  UpdateProfileRequest
+  UpdateProfileRequest,
+  ConversationSummary,
+  ConversationDetail
 } from '../types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
@@ -137,11 +139,27 @@ export const api = {
   },
 
   // Chat API
-  async sendChatMessage(message: string, history?: { role: 'user' | 'assistant'; content: string }[]): Promise<ChatResponse> {
-    return safeFetch<ChatResponse>('/chat', {
+ async sendChatMessage(
+    message: string,
+    history?: { role: 'user' | 'assistant'; content: string }[],
+    conversationId?: string
+  ): Promise<ChatResponse & { conversationId?: string }> {
+    return safeFetch('/chat', {
       method: 'POST',
-      body: JSON.stringify({ message, history }),
+      body: JSON.stringify({ message, history, conversationId }),
     });
+  },
+
+  async getConversations(): Promise<{ conversations: ConversationSummary[] }> {
+    return safeFetch('/conversations', { method: 'GET' });
+  },
+
+  async getConversation(id: string): Promise<ConversationDetail> {
+    return safeFetch(`/conversations/${id}`, { method: 'GET' });
+  },
+
+  async deleteConversation(id: string): Promise<{ message: string }> {
+    return safeFetch(`/conversations/${id}`, { method: 'DELETE' });
   },
 
   // Mock Interview APIs

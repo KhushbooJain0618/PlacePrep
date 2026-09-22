@@ -14,6 +14,26 @@ export interface ChatMessage {
 export interface ChatResponse {
   answer: string;
   sources: string[];
+  conversationId?: string;
+}
+export interface ConversationSummary {
+  id: string;
+  title: string;
+  updatedAt: string;
+}
+
+export interface ConversationDetail {
+  conversation: {
+    id: string;
+    title: string;
+  };
+  messages: {
+    id: string;
+    role: 'user' | 'assistant';
+    content: string;
+    sources?: string[];
+    createdAt: string;
+  }[];
 }
 
 export interface InterviewStartResponse {

@@ -41,3 +41,30 @@ export const requireAuth = (
     });
   }
 };
+/**
+ * Like requireAuth, but does not reject the request if no/invalid token is present.
+ * Attaches req.user only when a valid token is found. Used for routes (like /api/chat)
+ * that must keep working for guests, but persist history when a user IS logged in.
+ */
+export const optionalAuth = (
+  req: AuthenticatedRequest,
+  _res: Response,
+  next: NextFunction
+): void => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    next();
+    return;
+  }
+
+  const token = authHeader.split(' ')[1];
+
+  try {
+    const decoded = jwt.verify(token, config.jwtSecret) as AuthUserPayload;
+    req.user = decoded;
+  } catch {
+    // Invalid/expired token — proceed as guest rather than blocking the request
+  }
+  next();
+};

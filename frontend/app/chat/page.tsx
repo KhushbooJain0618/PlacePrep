@@ -4,7 +4,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Sidebar } from '../../components/layout/Sidebar';
 import {
   Send,
-  Sparkles,
   Bot,
   User,
   BookOpen,
@@ -12,13 +11,13 @@ import {
   RefreshCw,
   PlusCircle,
   MessageSquare,
-  Clock,
   Mic,
   Copy,
-  Check
+  Check,
+  Trash2
 } from 'lucide-react';
-import { api } from '../../lib/api';
-import { ChatMessage } from '../../types';
+import { api, authStorage } from '../../lib/api';
+import { ChatMessage, ConversationSummary } from '../../types';
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -36,7 +35,11 @@ export default function ChatPage() {
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [recentQueries, setRecentQueries] = useState<string[]>([]);
+
+  const [conversations, setConversations] = useState<ConversationSummary[]>([]);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [conversationsLoading, setConversationsLoading] = useState(false);
+  const isLoggedIn = !!authStorage.getToken();
 
   const suggestedQuestions = [
     'What DSA topics should I prepare for campus placements?',
@@ -53,11 +56,50 @@ export default function ChatPage() {
     scrollToBottom();
   }, [messages, isLoading]);
 
+  // Load the conversation list once, on mount, only if logged in
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    loadConversations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const loadConversations = async () => {
+    setConversationsLoading(true);
+    try {
+      const res = await api.getConversations();
+      setConversations(res.conversations);
+    } catch (err) {
+      console.error('Failed to load conversations:', err);
+    } finally {
+      setConversationsLoading(false);
+    }
+  };
+
+  const openConversation = async (id: string) => {
+    if (id === activeConversationId) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await api.getConversation(id);
+      const loaded: ChatMessage[] = res.messages.map((m) => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        timestamp: new Date(m.createdAt).toLocaleString(),
+        sources: m.sources,
+      }));
+      setMessages(loaded);
+      setActiveConversationId(id);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load that conversation.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSend = async (messageText?: string) => {
     const textToSend = messageText || inputMessage;
     if (!textToSend.trim() || isLoading) return;
-
-    setRecentQueries(prev => Array.from(new Set([textToSend.trim(), ...prev])).slice(0, 6));
 
     const userMessageId = 'user-' + Date.now();
     const newUserMsg: ChatMessage = {
@@ -77,7 +119,7 @@ export default function ChatPage() {
         .filter(m => m.id !== 'welcome-1')
         .map(m => ({ role: m.role, content: m.content }));
 
-      const res = await api.sendChatMessage(textToSend.trim(), history);
+      const res = await api.sendChatMessage(textToSend.trim(), history, activeConversationId || undefined);
 
       const aiMsg: ChatMessage = {
         id: 'assistant-' + Date.now(),
@@ -88,6 +130,16 @@ export default function ChatPage() {
       };
 
       setMessages(prev => [...prev, aiMsg]);
+
+      // First message of a new conversation — backend just created one, capture its id
+      // and refresh the sidebar list so the new thread appears.
+      if (res.conversationId && res.conversationId !== activeConversationId) {
+        setActiveConversationId(res.conversationId);
+        if (isLoggedIn) loadConversations();
+      } else if (isLoggedIn && activeConversationId) {
+        // Existing conversation just got a new message — bump it to top of the list
+        loadConversations();
+      }
     } catch (err: any) {
       console.error('Chat error:', err);
       setError(err.message || 'Something went wrong while connecting to the AI service. Please try again.');
@@ -120,18 +172,32 @@ export default function ChatPage() {
         sources: ['Placement Preparation Guide', 'Interview Handbook']
       }
     ]);
+    setActiveConversationId(null);
     setError(null);
   };
 
+  const handleDeleteConversation = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    try {
+      await api.deleteConversation(id);
+      setConversations(prev => prev.filter(c => c.id !== id));
+      if (id === activeConversationId) {
+        handleNewChat();
+      }
+    } catch (err) {
+      console.error('Failed to delete conversation:', err);
+    }
+  };
+
   return (
-    <div className="flex-1 flex bg-black min-h-0">
+    <div className="flex-1 flex bg-[#07111F] min-h-0">
       <Sidebar />
 
       {/* Main Chat Interface */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
-        {/* Left Sub-sidebar: Recent Conversations */}
+        {/* Left Sub-sidebar: Conversation History */}
         <div className="w-full md:w-64 shrink-0 bg-[#060608]/95 border-r border-white/[0.07] p-4 hidden lg:flex flex-col justify-between">
-          <div className="space-y-4">
+          <div className="space-y-4 flex-1 min-h-0 flex flex-col">
             <button
               onClick={handleNewChat}
               className="w-full py-2.5 px-3.5 rounded-xl bg-white hover:bg-neutral-200 text-black text-xs font-semibold flex items-center justify-center gap-2 transition-all shadow-sm"
@@ -140,35 +206,57 @@ export default function ChatPage() {
               <span>New Conversation</span>
             </button>
 
-            <div>
+            <div className="flex-1 min-h-0 overflow-y-auto">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400 mb-2 px-1">
-                Recent Queries
+                {isLoggedIn ? 'Your Conversations' : 'Recent Queries'}
               </p>
-              <div className="space-y-1">
-                {recentQueries.length === 0 ? (
-                  <p className="text-[11px] text-neutral-500 px-1 py-2 italic leading-relaxed">
-                    No recent queries yet. Ask a question to begin!
-                  </p>
-                ) : (
-                  recentQueries.map((title, idx) => (
+
+              {!isLoggedIn ? (
+                <p className="text-[11px] text-neutral-500 px-1 py-2 italic leading-relaxed">
+                  Sign in to save and revisit your past conversations.
+                </p>
+              ) : conversationsLoading ? (
+                <p className="text-[11px] text-neutral-500 px-1 py-2 italic leading-relaxed">
+                  Loading conversations…
+                </p>
+              ) : conversations.length === 0 ? (
+                <p className="text-[11px] text-neutral-500 px-1 py-2 italic leading-relaxed">
+                  No conversations yet. Ask a question to begin!
+                </p>
+              ) : (
+                <div className="space-y-1">
+                  {conversations.map((conv) => (
                     <button
-                      key={idx}
-                      onClick={() => handleSend(title)}
-                      className="w-full text-left p-2 rounded-lg hover:bg-white/[0.05] text-xs text-neutral-300 hover:text-white transition-colors group flex items-start gap-2"
+                      key={conv.id}
+                      onClick={() => openConversation(conv.id)}
+                      className={`w-full text-left p-2 rounded-lg text-xs transition-colors group flex items-start gap-2 ${
+                        conv.id === activeConversationId
+                          ? 'bg-white/[0.08] text-white'
+                          : 'hover:bg-white/[0.05] text-neutral-300 hover:text-white'
+                      }`}
                     >
-                      <MessageSquare className="w-3.5 h-3.5 text-neutral-500 group-hover:text-purple-400 shrink-0 mt-0.5" />
+                      <MessageSquare className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${
+                        conv.id === activeConversationId ? 'text-purple-400' : 'text-neutral-500 group-hover:text-purple-400'
+                      }`} />
                       <div className="flex-1 truncate">
-                        <p className="truncate font-medium">{title}</p>
+                        <p className="truncate font-medium">{conv.title}</p>
                       </div>
+                      <span
+                        onClick={(e) => handleDeleteConversation(e, conv.id)}
+                        className="opacity-0 group-hover:opacity-100 text-neutral-500 hover:text-red-400 transition-opacity shrink-0"
+                        title="Delete conversation"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </span>
                     </button>
-                  ))
-                )}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
           {/* RAG Information Pill */}
-          <div className="p-3 bg-[#0B0B0F] border border-white/[0.08] rounded-xl text-xs space-y-1 text-neutral-400">
+          <div className="p-3 bg-[#0B0B0F] border border-white/[0.08] rounded-xl text-xs space-y-1 text-neutral-400 mt-4">
             <div className="flex items-center gap-1.5 text-purple-400 font-semibold">
               <BookOpen className="w-3.5 h-3.5" />
               <span>Knowledge Grounding</span>
@@ -180,7 +268,7 @@ export default function ChatPage() {
         </div>
 
         {/* Center/Main Chat Area */}
-        <div className="flex-1 flex flex-col h-full min-h-0 bg-black relative">
+        <div className="flex-1 flex flex-col h-full min-h-0 bg-[#07111F] relative">
           {/* Header */}
           <div className="h-16 border-b border-white/[0.07] px-6 flex items-center justify-between bg-[#060608]/80 backdrop-blur-xl">
             <div className="flex items-center gap-3">
