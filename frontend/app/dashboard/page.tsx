@@ -134,11 +134,18 @@ export default function DashboardPage() {
       ];
 
   const targetRoleDisplay = currentUser?.targetRole || activeRoadmap?.targetRole || 'Software Developer';
-  const readinessScore =
-    (currentUser?.interviewsCompleted === 0 && (!activeRoadmap || activeRoadmap.progressPercentage === 0))
-      ? 0
-      : (currentUser?.preparationProgress ?? (activeRoadmap?.progressPercentage || (recentInterviews[0]?.overallScore ? Math.round(recentInterviews[0].overallScore * 0.9) : 0)));
-  const interviewsCount = recentInterviews.length || currentUser?.interviewsCompleted || 0;
+
+  // Compute live readiness score dynamically from actual completed interview evaluations & roadmap tasks
+  const avgInterviewScore = recentInterviews.length > 0
+    ? Math.round(recentInterviews.reduce((acc, curr) => acc + (curr.overallScore || 0), 0) / recentInterviews.length)
+    : 0;
+  const roadmapProgress = activeRoadmap?.progressPercentage || 0;
+
+  const readinessScore = (recentInterviews.length > 0 || roadmapProgress > 0)
+    ? Math.round((avgInterviewScore * 0.7) + (roadmapProgress * 0.3))
+    : (currentUser?.preparationProgress || 0);
+
+  const interviewsCount = recentInterviews.length;
 
   return (
     <div className="flex-1 flex bg-black min-h-[calc(100vh-4rem)] relative">
@@ -225,7 +232,7 @@ export default function DashboardPage() {
 
               <div className="bg-[#0E0E14] border border-white/[0.07] p-4 rounded-xl">
                 <span className="text-xs text-neutral-400 font-medium">Daily Streak</span>
-                <p className="text-2xl font-bold text-white mt-1">{currentUser?.dailyStreak ?? 1} Days</p>
+                <p className="text-2xl font-bold text-white mt-1">{currentUser?.dailyStreak ?? 0} Days</p>
                 <span className="text-[11px] text-cyan-400 mt-1 font-medium block">
                   Consistent preparation
                 </span>

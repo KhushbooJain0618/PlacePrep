@@ -23,9 +23,10 @@ export async function POST(req: NextRequest) {
         await InterviewHistory.create(user.userId, report);
         const dbUser = await User.findById(user.userId);
         if (dbUser) {
+          const newProgress = Math.max(dbUser.preparationProgress || 0, Math.round(report.overallScore || 0));
           await User.findByIdAndUpdate(user.userId, {
             interviewsCompleted: (dbUser.interviewsCompleted || 0) + 1,
-            preparationProgress: Math.min(100, (dbUser.preparationProgress || 0) + 5)
+            preparationProgress: newProgress
           });
         }
       } catch (persistErr) {
