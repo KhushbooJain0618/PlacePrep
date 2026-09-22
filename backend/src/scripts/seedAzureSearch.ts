@@ -15,12 +15,12 @@ async function seedAzureSearch() {
   const { endpoint, apiKey, indexName } = config.azure.search;
 
   if (!endpoint || !apiKey) {
-    console.error('❌ Error: AZURE_SEARCH_ENDPOINT and AZURE_SEARCH_API_KEY must be set in backend/.env to run seeding.');
+    console.error('[Error] Error: AZURE_SEARCH_ENDPOINT and AZURE_SEARCH_API_KEY must be set in backend/.env to run seeding.');
     process.exit(1);
   }
 
-  console.log(`🚀 Connecting to Azure AI Search service at: ${endpoint}`);
-  console.log(`🎯 Target Index: ${indexName}`);
+  console.log(`Connecting to Azure AI Search service at: ${endpoint}`);
+  console.log(`Target Index: ${indexName}`);
 
   const apiVersion = '2023-11-01';
 
@@ -40,7 +40,7 @@ async function seedAzureSearch() {
     }
   };
 
-  console.log('📦 Provisioning search index schema...');
+  console.log('Provisioning search index schema...');
   const createIndexRes = await fetch(indexUrl, {
     method: 'PUT',
     headers: {
@@ -52,10 +52,10 @@ async function seedAzureSearch() {
 
   if (!createIndexRes.ok) {
     const errText = await createIndexRes.text();
-    console.error(`❌ Failed to provision index: HTTP ${createIndexRes.status} - ${errText}`);
+    console.error(`[Error] Failed to provision index: HTTP ${createIndexRes.status} - ${errText}`);
     process.exit(1);
   }
-  console.log('✅ Search index schema provisioned successfully.');
+  console.log('Search index schema provisioned successfully.');
 
   // 2. Discover local knowledge base files
   const possibleKbPaths = [
@@ -65,12 +65,12 @@ async function seedAzureSearch() {
   let kbPath = possibleKbPaths.find(p => fs.existsSync(p));
 
   if (!kbPath) {
-    console.error('❌ Knowledge base directory not found.');
+    console.error('[Error] Knowledge base directory not found.');
     process.exit(1);
   }
 
   const files = fs.readdirSync(kbPath).filter(f => f.endsWith('.md') && f !== 'README.md');
-  console.log(`📚 Found ${files.length} knowledge base files to index:`, files);
+  console.log(`Found ${files.length} knowledge base files to index:`, files);
 
   const docs: SearchDoc[] = [];
 
@@ -100,7 +100,7 @@ async function seedAzureSearch() {
     });
   }
 
-  console.log(`📤 Uploading ${docs.length} document chunks to Azure AI Search...`);
+  console.log(`Uploading ${docs.length} document chunks to Azure AI Search...`);
 
   const uploadUrl = `${endpoint}/indexes/${indexName}/docs/index?api-version=${apiVersion}`;
   const uploadRes = await fetch(uploadUrl, {
@@ -114,11 +114,11 @@ async function seedAzureSearch() {
 
   if (!uploadRes.ok) {
     const errText = await uploadRes.text();
-    console.error(`❌ Failed to upload documents: HTTP ${uploadRes.status} - ${errText}`);
+    console.error(`[Error] Failed to upload documents: HTTP ${uploadRes.status} - ${errText}`);
     process.exit(1);
   }
 
-  console.log(`🎉 SUCCESS! Uploaded ${docs.length} knowledge chunks to Azure AI Search index '${indexName}'.`);
+  console.log(`SUCCESS! Uploaded ${docs.length} knowledge chunks to Azure AI Search index '${indexName}'.`);
 }
 
 seedAzureSearch().catch(err => {

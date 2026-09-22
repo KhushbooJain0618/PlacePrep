@@ -14,7 +14,33 @@ export class AIService {
     let apiKey = '';
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
 
-    if (config.azure.openai.endpoint && config.azure.openai.apiKey) {
+    if (config.azure.foundry.agentEndpoint && config.azure.foundry.apiKey) {
+      url = `${config.azure.foundry.agentEndpoint}?api-version=v1`;
+      apiKey = config.azure.foundry.apiKey;
+      headers['api-key'] = apiKey;
+
+      const promptText = messages.map(m => `[${m.role.toUpperCase()}]: ${m.content}`).join('\n\n');
+
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ input: promptText })
+        });
+
+        if (!res.ok) {
+          const errorText = await res.text().catch(() => '');
+          console.error(`[Azure AI Agent Error] HTTP ${res.status}: ${errorText}`);
+          return null;
+        }
+
+        const data = await res.json() as any;
+        return data.output?.[0]?.content?.[0]?.text || null;
+      } catch (err) {
+        console.error('[Azure AI Agent Call Failed]:', err);
+        return null;
+      }
+    } else if (config.azure.openai.endpoint && config.azure.openai.apiKey && !config.azure.openai.endpoint.includes('services.ai.azure.com')) {
       url = `${config.azure.openai.endpoint}/openai/deployments/${config.azure.openai.deploymentName}/chat/completions?api-version=${config.azure.openai.apiVersion}`;
       apiKey = config.azure.openai.apiKey;
       headers['api-key'] = apiKey;
@@ -109,6 +135,9 @@ Grounding references:\n${groundingContext}`;
           break;
         case 'OOP':
           finalSources = ['OOP & Design Principles Guide'];
+          break;
+        case 'SYSTEM_DESIGN':
+          finalSources = ['System Design & Scalability Guide'];
           break;
         default:
           finalSources = ['Placement Preparation Guide'];

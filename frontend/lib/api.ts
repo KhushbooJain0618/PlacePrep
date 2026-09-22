@@ -21,11 +21,18 @@ const USER_KEY = 'placeprep_user';
 export const authStorage = {
   getToken: (): string | null => {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem(TOKEN_KEY);
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token && typeof document !== 'undefined' && !document.cookie.includes(`${TOKEN_KEY}=`)) {
+      document.cookie = `${TOKEN_KEY}=${encodeURIComponent(token)}; path=/; max-age=2592000; SameSite=Lax`;
+    }
+    return token;
   },
   setToken: (token: string): void => {
     if (typeof window === 'undefined') return;
     localStorage.setItem(TOKEN_KEY, token);
+    if (typeof document !== 'undefined') {
+      document.cookie = `${TOKEN_KEY}=${encodeURIComponent(token)}; path=/; max-age=2592000; SameSite=Lax`;
+    }
   },
   getUser: (): StudentUser | null => {
     if (typeof window === 'undefined') return null;
@@ -44,6 +51,9 @@ export const authStorage = {
     if (typeof window === 'undefined') return;
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    if (typeof document !== 'undefined') {
+      document.cookie = `${TOKEN_KEY}=; path=/; max-age=0; SameSite=Lax`;
+    }
   }
 };
 
@@ -199,6 +209,12 @@ export const api = {
     });
   },
 
+  async getInterviewHistory(): Promise<{ interviews: InterviewFinishResponse[] }> {
+    return safeFetch<{ interviews: InterviewFinishResponse[] }>('/interview/history', {
+      method: 'GET',
+    });
+  },
+
   // Roadmap APIs
   async generateRoadmap(params: {
     role: string;
@@ -210,6 +226,18 @@ export const api = {
     return safeFetch<RoadmapGenerateResponse>('/roadmap/generate', {
       method: 'POST',
       body: JSON.stringify(params),
+    });
+  },
+
+  async getLatestRoadmap(): Promise<{ roadmap: RoadmapGenerateResponse | null }> {
+    return safeFetch<{ roadmap: RoadmapGenerateResponse | null }>('/roadmap/latest', {
+      method: 'GET',
+    });
+  },
+
+  async getRoadmapHistory(): Promise<{ roadmaps: RoadmapGenerateResponse[] }> {
+    return safeFetch<{ roadmaps: RoadmapGenerateResponse[] }>('/roadmap/history', {
+      method: 'GET',
     });
   },
 

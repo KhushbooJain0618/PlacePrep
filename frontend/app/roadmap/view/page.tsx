@@ -40,7 +40,20 @@ export default function RoadmapViewPage() {
         }
       }
 
-      // Default load via backend api
+      // Check backend for logged-in user's saved roadmap
+      try {
+        const latestRes = await api.getLatestRoadmap();
+        if (latestRes.roadmap) {
+          setRoadmap(latestRes.roadmap);
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('active_placement_roadmap', JSON.stringify(latestRes.roadmap));
+          }
+          setLoading(false);
+          return;
+        }
+      } catch {}
+
+      // Fallback load via backend api
       try {
         const res = await api.generateRoadmap({
           role: 'Software Developer',

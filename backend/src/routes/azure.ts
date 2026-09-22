@@ -15,11 +15,50 @@ azureRouter.get('/diagnostics', async (req: Request, res: Response) => {
     services: {}
   };
 
-  // 1. Check Azure OpenAI / Foundry
-  const hasOpenAI = !!(config.azure.openai.endpoint && config.azure.openai.apiKey);
+  // 1. Check Azure AI Foundry Agent / Azure OpenAI
+  const hasAgent = !!(config.azure.foundry.agentEndpoint && config.azure.foundry.apiKey);
+  const hasOpenAI = !!(config.azure.openai.endpoint && config.azure.openai.apiKey && !config.azure.openai.endpoint.includes('services.ai.azure.com'));
   const hasFoundry = !!(config.azure.foundry.projectEndpoint && config.azure.foundry.apiKey);
 
-  if (hasOpenAI) {
+  if (hasAgent) {
+    try {
+      const pingUrl = `${config.azure.foundry.agentEndpoint}?api-version=v1`;
+      const pingRes = await fetch(pingUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'api-key': config.azure.foundry.apiKey
+        },
+        body: JSON.stringify({
+          input: 'ping'
+        })
+      });
+
+      if (pingRes.ok) {
+        results.services.azureOpenAI = {
+          configured: true,
+          status: 'connected',
+          deployment: 'PlacePrep-Agent (gpt-4.1-mini)',
+          endpoint: config.azure.foundry.agentEndpoint,
+          message: 'Azure AI Foundry PlacePrep-Agent is active and responding to requests.'
+        };
+      } else {
+        const err = await pingRes.text().catch(() => '');
+        results.services.azureOpenAI = {
+          configured: true,
+          status: 'error',
+          httpStatus: pingRes.status,
+          message: `Endpoint returned error: ${err.substring(0, 150)}`
+        };
+      }
+    } catch (e: any) {
+      results.services.azureOpenAI = {
+        configured: true,
+        status: 'error',
+        message: e.message || 'Failed to connect to Azure AI Foundry Agent endpoint.'
+      };
+    }
+  } else if (hasOpenAI) {
     try {
       const pingUrl = `${config.azure.openai.endpoint}/openai/deployments/${config.azure.openai.deploymentName}/chat/completions?api-version=${config.azure.openai.apiVersion}`;
       const pingRes = await fetch(pingUrl, {

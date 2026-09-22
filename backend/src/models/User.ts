@@ -88,7 +88,7 @@ export const User = {
 
     const { data, error } = await query.maybeSingle();
     if (error) {
-      console.warn('⚠️ [Supabase findOne error]:', error.message);
+      console.warn('[Supabase findOne error]:', error.message);
       return null;
     }
     return data ? rowToUser(data as UserRow) : null;
@@ -139,7 +139,7 @@ export const User = {
       .maybeSingle();
 
     if (error) {
-      console.warn('⚠️ [Supabase findByIdAndUpdate error]:', error.message);
+      console.warn('[Supabase findByIdAndUpdate error]:', error.message);
       return null;
     }
     return data ? rowToUser(data as UserRow) : null;

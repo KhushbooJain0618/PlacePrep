@@ -97,16 +97,13 @@ export class RoadmapService {
 
         const taskItems: RoadmapTask[] = curriculumDay.tasks.map((taskName, idx) => {
           totalTasksCount++;
-          // Mark first 4 tasks as completed for realistic initial progress visualization (~42%)
-          const isCompleted = dayCounter <= 2 && idx < 2;
-          if (isCompleted) completedTasksCount++;
 
           return {
             id: `task-w${w}-d${d + 1}-t${idx + 1}`,
             title: taskName,
             topic: topicKey,
             estimatedMinutes: Math.round(dailyMinutes / curriculumDay.tasks.length),
-            status: isCompleted ? 'completed' : 'pending',
+            status: 'pending',
             resources: ['Placement Preparation Guide', `${topicKey} Fundamentals`]
           };
         });
@@ -129,8 +126,6 @@ export class RoadmapService {
       });
     }
 
-    const progressPercentage = totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : 42;
-
     return {
       id: 'roadmap_' + Math.random().toString(36).substring(2, 9),
       targetRole: req.role,
@@ -138,7 +133,7 @@ export class RoadmapService {
       durationDays: duration,
       dailyHours: req.dailyHours,
       totalWeeks,
-      progressPercentage: progressPercentage || 42,
+      progressPercentage: 0,
       weeks,
       createdAt: new Date().toISOString()
     };

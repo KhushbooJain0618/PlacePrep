@@ -39,7 +39,7 @@ export const Message = {
       .order('created_at', { ascending: true });
 
     if (error) {
-      console.warn('⚠️ [Supabase Message.findByConversation error]:', error.message);
+      console.warn('[Supabase Message.findByConversation error]:', error.message);
       return [];
     }
     return (data || []).map((r) => rowToMessage(r as MessageRow));
@@ -66,7 +66,7 @@ export const Message = {
       .single();
 
     if (error) {
-      console.warn('⚠️ [Supabase Message.create error]:', error.message);
+      console.warn('[Supabase Message.create error]:', error.message);
       return null;
     }
     return rowToMessage(row as MessageRow);

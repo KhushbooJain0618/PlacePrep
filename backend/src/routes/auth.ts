@@ -20,10 +20,10 @@ const formatUser = (user: IUser | any) => ({
   email: user.email,
   targetRole: user.targetRole,
   collegeYear: user.collegeYear,
-  preparationProgress: user.preparationProgress ?? 86,
-  dailyStreak: user.dailyStreak ?? 7,
-  interviewsCompleted: user.interviewsCompleted ?? 4,
-  topicsCovered: user.topicsCovered ?? 18,
+  preparationProgress: user.preparationProgress ?? 0,
+  dailyStreak: user.dailyStreak ?? 1,
+  interviewsCompleted: user.interviewsCompleted ?? 0,
+  topicsCovered: user.topicsCovered ?? 0,
 });
 
 /**
@@ -64,7 +64,7 @@ authRouter.post('/register', async (req: any, res: Response): Promise<void> => {
           password: hashedPassword,
           targetRole: targetRole || 'Software Engineer',
           collegeYear: collegeYear || 'Final Year (Class of 2026)',
-          preparationProgress: 10,
+          preparationProgress: 0,
           dailyStreak: 1,
           interviewsCompleted: 0,
           topicsCovered: 0,
@@ -84,7 +84,7 @@ authRouter.post('/register', async (req: any, res: Response): Promise<void> => {
         });
         return;
       } catch (dbErr: any) {
-        console.warn('⚠️ [Auth Register] Supabase query failed, falling back to mock storage:', dbErr.message);
+        console.warn('[Auth Register] Supabase query failed, falling back to mock storage:', dbErr.message);
       }
     }
 
@@ -95,7 +95,7 @@ authRouter.post('/register', async (req: any, res: Response): Promise<void> => {
       email: normalizedEmail,
       targetRole: targetRole || 'Software Engineer',
       collegeYear: collegeYear || 'Final Year (Class of 2026)',
-      preparationProgress: 15,
+      preparationProgress: 0,
       dailyStreak: 1,
       interviewsCompleted: 0,
       topicsCovered: 0,
@@ -160,7 +160,7 @@ authRouter.post('/login', async (req: any, res: Response): Promise<void> => {
           return;
         }
       } catch (dbErr: any) {
-        console.warn('⚠️ [Auth Login] Supabase query failed, falling back to mock authentication:', dbErr.message);
+        console.warn('[Auth Login] Supabase query failed, falling back to mock authentication:', dbErr.message);
       }
     }
 

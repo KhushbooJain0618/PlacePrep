@@ -36,7 +36,7 @@ export const Conversation = {
       .order('updated_at', { ascending: false });
 
     if (error) {
-      console.warn('⚠️ [Supabase Conversation.findByUser error]:', error.message);
+      console.warn('[Supabase Conversation.findByUser error]:', error.message);
       return [];
     }
     return (data || []).map((r) => rowToConversation(r as ConversationRow));
@@ -53,7 +53,7 @@ export const Conversation = {
       .maybeSingle();
 
     if (error) {
-      console.warn('⚠️ [Supabase Conversation.findById error]:', error.message);
+      console.warn('[Supabase Conversation.findById error]:', error.message);
       return null;
     }
     return data ? rowToConversation(data as ConversationRow) : null;
@@ -70,7 +70,7 @@ export const Conversation = {
       .single();
 
     if (error) {
-      console.warn('⚠️ [Supabase Conversation.create error]:', error.message);
+      console.warn('[Supabase Conversation.create error]:', error.message);
       return null;
     }
     return rowToConversation(data as ConversationRow);

@@ -2,6 +2,10 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { interviewService } from '../services/interviewService.js';
 import { speechService } from '../services/speechService.js';
 import { visionService } from '../services/visionService.js';
+import { optionalAuth, requireAuth, AuthenticatedRequest } from '../middleware/auth.js';
+import { isSupabaseConnected } from '../config/supabase.js';
+import { InterviewHistory } from '../models/InterviewHistory.js';
+import { User } from '../models/User.js';
 
 export const interviewRouter = Router();
 
@@ -58,7 +62,7 @@ interviewRouter.post('/answer', async (req: Request, res: Response, next: NextFu
 });
 
 // POST /api/interview/finish
-interviewRouter.post('/finish', (req: Request, res: Response, next: NextFunction) => {
+interviewRouter.post('/finish', optionalAuth, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     const { sessionId } = req.body;
     if (!sessionId) {
@@ -66,7 +70,37 @@ interviewRouter.post('/finish', (req: Request, res: Response, next: NextFunction
     }
 
     const report = interviewService.finishSession(sessionId);
+
+    // Persist interview evaluation if user is authenticated and Supabase is active
+    if (req.user && isSupabaseConnected()) {
+      try {
+        await InterviewHistory.create(req.user.userId, report);
+        const user = await User.findById(req.user.userId);
+        if (user) {
+          await User.findByIdAndUpdate(req.user.userId, {
+            interviewsCompleted: (user.interviewsCompleted || 0) + 1,
+            preparationProgress: Math.min(100, (user.preparationProgress || 0) + 5)
+          });
+        }
+      } catch (persistErr) {
+        console.warn('[Interview] History persistence error:', persistErr);
+      }
+    }
+
     return res.json(report);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/interview/history
+interviewRouter.get('/history', requireAuth, async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: true, message: 'Unauthorized' });
+    }
+    const interviews = await InterviewHistory.findByUser(req.user.userId);
+    return res.json({ interviews });
   } catch (err) {
     next(err);
   }

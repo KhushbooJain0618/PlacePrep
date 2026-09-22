@@ -30,7 +30,10 @@ export default function LoginPage() {
 
     try {
       await api.login({ email, password });
-      router.push('/dashboard');
+      const redirect = typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('redirect')
+        : null;
+      router.push(redirect && redirect.startsWith('/') ? redirect : '/dashboard');
     } catch (err: any) {
       setError(err.message || 'Invalid credentials. Please try again.');
     } finally {
@@ -48,7 +51,10 @@ export default function LoginPage() {
 
     try {
       await api.login({ email: demoEmail, password: demoPass });
-      router.push('/dashboard');
+      const redirect = typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('redirect')
+        : null;
+      router.push(redirect && redirect.startsWith('/') ? redirect : '/dashboard');
     } catch (err: any) {
       setError(err.message || 'Demo sign-in failed.');
     } finally {

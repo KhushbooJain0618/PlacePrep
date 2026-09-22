@@ -10,7 +10,7 @@ let supabaseConnected = false;
 export const initSupabase = async (): Promise<boolean> => {
   try {
     if (!config.supabase.url || !config.supabase.key) {
-      console.warn('⚠️ [Supabase] No SUPABASE_URL or SUPABASE_SECRET_KEY configured.');
+      console.warn('[Supabase] No SUPABASE_URL or SUPABASE_SECRET_KEY configured.');
       console.warn('   Note: Backend will run in offline/mock database mode.');
       console.warn('   To connect to live Supabase, configure SUPABASE_URL & SUPABASE_SECRET_KEY in backend/.env');
       supabaseConnected = false;
@@ -33,7 +33,7 @@ export const initSupabase = async (): Promise<boolean> => {
     if (error) {
       // If table doesn't exist yet (e.g. schema needs to be run), provide helpful pointer
       if (error.code === '42P01') {
-        console.warn('⚠️ [Supabase] Connected to Supabase project, but "users" table was not found.');
+        console.warn('[Supabase] Connected to Supabase project, but "users" table was not found.');
         console.warn('   Please execute "backend/supabase-schema.sql" in your Supabase SQL Editor to initialize tables.');
         supabaseConnected = true; // Connection works, schema needs to be initialized
         return true;
@@ -42,12 +42,12 @@ export const initSupabase = async (): Promise<boolean> => {
     }
 
     supabaseConnected = true;
-    console.log(`📦 [Supabase] Connected successfully to Supabase: ${config.supabase.url}`);
+    console.log(`[Supabase] Connected successfully to Supabase: ${config.supabase.url}`);
     return true;
   } catch (error: any) {
     supabaseConnected = false;
     console.warn('----------------------------------------------------');
-    console.warn(`⚠️ [Supabase] Connection test failed: ${error.message || error}`);
+    console.warn(`[Supabase] Connection test failed: ${error.message || error}`);
     console.warn('   Note: Server will continue running in offline/mock database mode.');
     console.warn('   To connect, ensure your Supabase project is active and keys are valid in backend/.env');
     console.warn('----------------------------------------------------');

@@ -61,8 +61,8 @@ export const Sidebar: React.FC = () => {
   ];
 
   return (
-    <aside className="w-64 shrink-0 hidden md:block">
-      <div className="fixed top-16 left-0 w-64 h-[calc(100vh-4rem)] bg-[#060608]/95 border-r border-white/[0.07] backdrop-blur-xl flex flex-col justify-between z-30 overflow-hidden select-none">
+    <aside className="w-64 shrink-0 hidden md:block select-none" aria-label="Sidebar navigation">
+      <div className="fixed top-16 left-0 w-64 h-[calc(100vh-4rem)] bg-[#060608]/95 border-r border-white/[0.07] backdrop-blur-xl flex flex-col justify-between z-30 overflow-hidden overscroll-none select-none">
         <div className="p-4 space-y-5">
           {/* Placement Status Card */}
           <div className="p-3.5 bg-[#0B0B0F]/90 border border-white/[0.08] rounded-xl shadow-sm">

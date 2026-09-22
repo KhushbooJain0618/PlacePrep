@@ -11,7 +11,6 @@ import {
   Lock,
   Eye,
   EyeOff,
-  Briefcase,
   AlertCircle
 } from 'lucide-react';
 import { api } from '../../lib/api';
@@ -20,7 +19,6 @@ export default function SignupPage() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [targetRole, setTargetRole] = useState('Software Developer');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -41,9 +39,11 @@ export default function SignupPage() {
         name,
         email,
         password,
-        targetRole,
       });
-      router.push('/dashboard');
+      const redirect = typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('redirect')
+        : null;
+      router.push(redirect && redirect.startsWith('/') ? redirect : '/dashboard');
     } catch (err: any) {
       setError(err.message || 'Failed to create account. Please try again.');
     } finally {
@@ -119,27 +119,6 @@ export default function SignupPage() {
                 placeholder="student@college.edu"
                 className="w-full pl-10 pr-3.5 py-2 rounded-xl bg-black/60 border border-white/[0.09] text-white placeholder-neutral-500 text-sm focus:outline-none focus:border-purple-500 transition-colors"
               />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-semibold uppercase tracking-wider text-neutral-400 mb-1">
-              Target Role
-            </label>
-            <div className="relative">
-              <Briefcase className="w-4 h-4 text-neutral-500 absolute left-3.5 top-2.5" />
-              <select
-                value={targetRole}
-                onChange={(e) => setTargetRole(e.target.value)}
-                className="w-full pl-10 pr-3.5 py-2 rounded-xl bg-[#0B0B10] border border-white/[0.09] text-white text-sm focus:outline-none focus:border-purple-500 transition-colors"
-              >
-                <option value="Software Engineer">Software Engineer (SDE)</option>
-                <option value="Frontend Engineer">Frontend Engineer</option>
-                <option value="Backend Engineer">Backend Engineer</option>
-                <option value="Full Stack Developer">Full Stack Developer</option>
-                <option value="Data Scientist">Data Scientist / AI Engineer</option>
-                <option value="DevOps / Cloud">DevOps / Cloud Engineer</option>
-              </select>
             </div>
           </div>
 

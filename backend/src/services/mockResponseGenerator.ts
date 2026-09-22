@@ -22,6 +22,9 @@ export class MockResponseGenerator {
       case 'OOP':
         return this.generateOOPResponse(query);
 
+      case 'SYSTEM_DESIGN':
+        return this.generateSystemDesignResponse(query);
+
       case 'GENERAL_PLACEMENT':
         return this.generateGeneralPlacementResponse(query);
 
@@ -115,7 +118,7 @@ What subject or topic would you like to focus on today?`;
 
       if (q.constraints.wantsSimple) {
         content += `In simple terms, the **OSI Model** is a 7-layer architectural blueprint that describes how data travels from an application on your computer, across physical network cables or Wi-Fi, to an application on another computer.\n\n`;
-        content += `> 💡 **Mnemonic to Remember the 7 Layers (Top to Bottom)**:\n`;
+        content += `> **Mnemonic to Remember the 7 Layers (Top to Bottom)**:\n`;
         content += `> **A**ll **P**eople **S**eem **T**o **N**eed **D**ata **P**rocessing\n`;
         content += `> *(Application → Presentation → Session → Transport → Network → Data Link → Physical)*\n\n`;
       }
@@ -183,7 +186,7 @@ To excel in technical rounds for software engineering roles, focus on **protocol
 | **Day 6** | **Application Layer & Web** | HTTP/1.1 vs HTTP/2 vs HTTP/3, DNS root-to-TLD resolution, HTTPS TLS handshake | Answer: "What happens when you type google.com and press Enter?" |
 | **Day 7** | **Mock Interview & Rapid Review** | High-frequency questions, Port numbers (\`80\`, \`443\`, \`53\`, \`22\`, \`25\`), Common traps | Practice explaining TCP handshake verbally under 2 minutes |
 
-> 💡 **Placement Tip**: In interview coding rounds or technical interviews, always be prepared to explain the exact network path of an API call or database query!`;
+> **Placement Tip**: In interview coding rounds or technical interviews, always be prepared to explain the exact network path of an API call or database query!`;
 
       return content;
     }
@@ -248,7 +251,7 @@ To master Operating Systems for technical rounds, follow this day-by-day curricu
   - Rapid-fire placement questions (Top 20 OS questions).
   - Practice explaining *Virtual Memory* and *Deadlocks* verbally in under 3 minutes without hesitation.
 
-> 💡 **Placement Tip**: When asked about Threads vs Processes, always draw the memory layout diagram showing shared Code, Data, and Heap, alongside private Stacks!`;
+> **Placement Tip**: When asked about Threads vs Processes, always draw the memory layout diagram showing shared Code, Data, and Heap, alongside private Stacks!`;
     }
 
     // Specific OS questions or concepts
@@ -323,7 +326,7 @@ SELECT salary FROM (
 WHERE rank_num = 2;
 \`\`\`
 
-> 💡 **Interview Tip**: Whenever an interviewer asks you to optimize a slow query, discuss adding an index on columns used in \`WHERE\` and \`JOIN\` clauses, avoiding \`SELECT *\`, and examining the database query execution plan!`;
+> **Interview Tip**: Whenever an interviewer asks you to optimize a slow query, discuss adding an index on columns used in \`WHERE\` and \`JOIN\` clauses, avoiding \`SELECT *\`, and examining the database query execution plan!`;
   }
 
   // -------------------------------------------------------------
@@ -378,7 +381,7 @@ function binarySearch(nums: number[], target: number): number {
 }
 \`\`\`
 
-> 💡 **Campus Placement Variations**:
+> **Campus Placement Variations**:
 > 1. **Search in Rotated Sorted Array** (Determine which half is strictly sorted before binary search).
 > 2. **Binary Search on Answer Space** (E.g., *Allocate Minimum Pages*, *Aggressive Cows*, *Capacity To Ship Packages Within D Days*).`;
     }
@@ -481,7 +484,34 @@ Campus recruitment drives for software engineering and technical roles typically
 - Prepare behavioral responses using the **STAR Method** (**S**ituation, **T**ask, **A**ction, **R**esult).
 - Prepare standard questions: "Tell me about yourself", "Explain a technical challenge you solved", and company-specific culture values.
 
-> 💡 **Next Step**: Choose a specific subject to start practicing today, or ask me for a dedicated 7-day study plan in **DSA**, **CNDC**, **OS**, or **DBMS**!`;
+> **Next Step**: Choose a specific subject to start practicing today, or ask me for a dedicated 7-day study plan in **DSA**, **CNDC**, **OS**, or **DBMS**!`;
+  }
+
+  // -------------------------------------------------------------
+  // SYSTEM DESIGN
+  // -------------------------------------------------------------
+  private generateSystemDesignResponse(q: ClassifiedQuery): string {
+    const raw = q.rawQuery.toLowerCase();
+    const company = q.constraints.targetCompany ? ` (${q.constraints.targetCompany.toUpperCase()} Interviews)` : '';
+
+    return `## System Design Preparation Guide${company}
+
+System Design interviews evaluate your ability to design scalable, reliable, and fault-tolerant software architectures:
+
+### 1. Core Architectural Concepts:
+- **Load Balancing**: Distributing incoming traffic across compute nodes (Round Robin, Least Connections, IP Hash; L4 vs L7).
+- **Caching Strategies**: In-memory caching (Redis / Memcached), Cache-Aside, Write-Through, Write-Back, and eviction policies (LRU, LFU).
+- **Database Scaling**: Horizontal vs Vertical scaling, Read Replicas, Database Sharding (consistent hashing), and SQL vs NoSQL trade-offs.
+- **Asynchronous Processing**: Decoupling services with Message Queues (Apache Kafka, RabbitMQ) and event-driven architecture.
+- **Data Consistency & CAP Theorem**: Consistency vs Availability vs Partition Tolerance in distributed storage systems.
+
+### 2. Standard 4-Step Interview Framework:
+1. **Requirements Clarification**: Establish functional & non-functional requirements (throughput, latency, availability, storage capacity).
+2. **High-Level Design**: Draw major components (Client → CDN / API Gateway → Load Balancer → Application Services → Cache → Database).
+3. **Deep Dive**: Address single points of failure (SPOF), partition keys, caching TTL, and scale bottlenecks.
+4. **Wrap-up**: Summarize bottlenecks, disaster recovery, and monitoring metrics.
+
+Would you like to practice designing a specific system (e.g., URL Shortener, Rate Limiter, Notification System, or E-Commerce Cart)?`;
   }
 
   // -------------------------------------------------------------

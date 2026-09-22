@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { api, authStorage } from '../../lib/api';
 import { ChatMessage, ConversationSummary } from '../../types';
+import { FormattedMessage } from '../../components/chat/FormattedMessage';
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -326,9 +327,13 @@ export default function ChatPage() {
                           : 'bg-[#0D0D12] border border-white/[0.08] text-neutral-200 rounded-tl-none shadow-sm'
                       }`}
                     >
-                      <div className="whitespace-pre-line prose-invert">
-                        {msg.content}
-                      </div>
+                      {isUser ? (
+                        <div className="whitespace-pre-line text-sm">
+                          {msg.content}
+                        </div>
+                      ) : (
+                        <FormattedMessage content={msg.content} />
+                      )}
 
                       {/* Copy Action Button */}
                       {!isUser && (
