@@ -25,7 +25,7 @@ import { ResponsibleAINotice } from '../../../components/interview/ResponsibleAI
 
 function InterviewResultContent() {
   const searchParams = useSearchParams();
-  const sessionId = searchParams.get('sessionId') || 'session_demo';
+  const sessionId = searchParams.get('sessionId');
 
   const [report, setReport] = useState<InterviewFinishResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -33,9 +33,14 @@ function InterviewResultContent() {
   const [expandedQIndex, setExpandedQIndex] = useState<number | null>(0);
 
   useEffect(() => {
+    if (!sessionId) {
+      setLoading(false);
+      return;
+    }
+
     async function loadReport() {
       try {
-        const data = await api.getInterviewResult(sessionId);
+        const data = await api.getInterviewResult(sessionId!);
         setReport(data);
       } catch (err: any) {
         console.warn('Failed fetching interview result:', err);

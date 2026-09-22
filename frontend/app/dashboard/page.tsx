@@ -103,35 +103,7 @@ export default function DashboardPage() {
         icon: idx === 0 ? Code2 : idx === 1 ? Layers : Database,
         color: idx === 0 ? 'text-purple-400' : idx === 1 ? 'text-cyan-400' : 'text-amber-400'
       }))
-    : [
-        {
-          subject: 'DSA',
-          topic: 'Arrays & Two Pointers',
-          detail: 'Solve key foundational problems: Maximum Subarray, 2Sum, and Two Pointers',
-          duration: '45 mins',
-          completed: false,
-          icon: Code2,
-          color: 'text-purple-400'
-        },
-        {
-          subject: 'OOP',
-          topic: 'Inheritance & Polymorphism',
-          detail: 'Review virtual methods, dynamic dispatch, and interface vs abstract class',
-          duration: '30 mins',
-          completed: false,
-          icon: Layers,
-          color: 'text-cyan-400'
-        },
-        {
-          subject: 'SQL',
-          topic: 'Joins & Aggregation Queries',
-          detail: 'Practice writing queries with INNER, LEFT, and aggregate GROUP BY filters',
-          duration: '30 mins',
-          completed: false,
-          icon: Database,
-          color: 'text-amber-400'
-        }
-      ];
+    : [];
 
   const targetRoleDisplay = currentUser?.targetRole || activeRoadmap?.targetRole || 'Software Developer';
 
@@ -590,46 +562,65 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-            {todayFocusItems.map((item, idx) => {
-              const Icon = item.icon;
-              return (
-                <div
-                  key={idx}
-                  className="bg-[#0E0E14] border border-white/[0.07] p-4 rounded-xl flex flex-col justify-between space-y-3 hover:border-purple-500/30 transition-colors"
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className={`text-xs font-bold ${item.color} uppercase tracking-wider`}>
-                        {item.subject}
-                      </span>
-                      <div className="flex items-center gap-1 text-[11px] text-neutral-400">
-                        <Clock className="w-3 h-3" />
-                        <span>{item.duration}</span>
+          {todayFocusItems.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+              {todayFocusItems.map((item, idx) => {
+                const Icon = item.icon;
+                return (
+                  <div
+                    key={idx}
+                    className="bg-[#0E0E14] border border-white/[0.07] p-4 rounded-xl flex flex-col justify-between space-y-3 hover:border-purple-500/30 transition-colors"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className={`text-xs font-bold ${item.color} uppercase tracking-wider`}>
+                          {item.subject}
+                        </span>
+                        <div className="flex items-center gap-1 text-[11px] text-neutral-400">
+                          <Clock className="w-3 h-3" />
+                          <span>{item.duration}</span>
+                        </div>
                       </div>
+                      <h5 className="text-sm font-semibold text-white">{item.topic}</h5>
+                      <p className="text-xs text-neutral-400 mt-1 leading-relaxed">
+                        {item.detail}
+                      </p>
                     </div>
-                    <h5 className="text-sm font-semibold text-white">{item.topic}</h5>
-                    <p className="text-xs text-neutral-400 mt-1 leading-relaxed">
-                      {item.detail}
-                    </p>
-                  </div>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-white/[0.06] text-xs">
-                    <div className="flex items-center gap-1.5 text-neutral-400">
-                      <span className={`w-2 h-2 rounded-full ${item.completed ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-                      <span>{item.completed ? 'Completed' : 'Pending Practice'}</span>
+                    <div className="flex items-center justify-between pt-2 border-t border-white/[0.06] text-xs">
+                      <div className="flex items-center gap-1.5 text-neutral-400">
+                        <span className={`w-2 h-2 rounded-full ${item.completed ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+                        <span>{item.completed ? 'Completed' : 'Pending Practice'}</span>
+                      </div>
+                      <Link
+                        href="/chat"
+                        className="text-xs text-purple-400 hover:text-purple-300 font-medium"
+                      >
+                        Study Notes &rarr;
+                      </Link>
                     </div>
-                    <Link
-                      href="/chat"
-                      className="text-xs text-purple-400 hover:text-purple-300 font-medium"
-                    >
-                      Study Notes &rarr;
-                    </Link>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="p-8 rounded-xl bg-[#0E0E14] border border-white/[0.07] text-center space-y-3">
+              <BookOpen className="w-8 h-8 text-neutral-500 mx-auto" />
+              <h5 className="text-sm font-semibold text-white">No Active Syllabus Targets Yet</h5>
+              <p className="text-xs text-neutral-400 max-w-md mx-auto">
+                Generate your personalized {targetRoleDisplay} roadmap to get daily syllabus tasks tailored to your preparation timeline.
+              </p>
+              <div className="pt-2">
+                <Link
+                  href="/roadmap"
+                  className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs transition inline-flex items-center gap-1.5"
+                >
+                  <span>Build Preparation Roadmap</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

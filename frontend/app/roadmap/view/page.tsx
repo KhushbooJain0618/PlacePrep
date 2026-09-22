@@ -53,21 +53,7 @@ export default function RoadmapViewPage() {
         }
       } catch {}
 
-      // Fallback load via backend api
-      try {
-        const res = await api.generateRoadmap({
-          role: 'Software Developer',
-          level: 'Beginner',
-          dailyHours: 2,
-          duration: 60,
-          topics: ['DSA', 'OOP', 'DBMS', 'OS', 'SQL']
-        });
-        setRoadmap(res);
-      } catch (err) {
-        console.warn('Roadmap API call failed, generating fallback template:', err);
-      } finally {
-        setLoading(false);
-      }
+      setLoading(false);
     }
 
     loadData();
@@ -130,13 +116,37 @@ export default function RoadmapViewPage() {
     }));
   };
 
-  if (loading || !roadmap) {
+  if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-black min-h-[calc(100vh-4rem)] relative overflow-hidden">
         <div className="ambient-center-glow opacity-30 pointer-events-none" />
         <div className="text-center space-y-3 relative z-10">
           <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm text-slate-300">Assembling placement roadmap...</p>
+          <p className="text-sm text-slate-300">Loading placement roadmap...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!roadmap) {
+    return (
+      <div className="flex-1 flex bg-black min-h-[calc(100vh-4rem)] relative overflow-hidden">
+        <Sidebar />
+        <div className="flex-1 p-8 max-w-xl mx-auto flex flex-col items-center justify-center text-center space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+            <Map className="w-6 h-6" />
+          </div>
+          <h2 className="text-xl font-bold text-white">No Roadmap Generated Yet</h2>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            You have not created a placement preparation roadmap yet. Build your customized syllabus based on your target role, difficulty level, and study timeline.
+          </p>
+          <Link
+            href="/roadmap"
+            className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs transition shadow-md inline-flex items-center gap-2"
+          >
+            <span>Create Your Roadmap</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
         </div>
       </div>
     );
