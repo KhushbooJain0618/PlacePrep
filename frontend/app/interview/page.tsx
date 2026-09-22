@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Sidebar } from '../../components/layout/Sidebar';
 import {
   Video,
@@ -12,10 +13,12 @@ import {
   ArrowRight,
   Sparkles,
   Sliders,
-  HelpCircle
+  HelpCircle,
+  Clock,
+  Award
 } from 'lucide-react';
 import { api } from '../../lib/api';
-import { DifficultyLevel, InterviewType } from '../../types';
+import { DifficultyLevel, InterviewType, InterviewFinishResponse } from '../../types';
 import { ResponsibleAINotice } from '../../components/interview/ResponsibleAINotice';
 
 export default function InterviewSetupPage() {
@@ -27,6 +30,15 @@ export default function InterviewSetupPage() {
   const [questionCount, setQuestionCount] = useState<number>(5);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pastInterviews, setPastInterviews] = useState<InterviewFinishResponse[]>([]);
+
+  useEffect(() => {
+    api.getInterviewHistory().then(res => {
+      if (res.interviews) {
+        setPastInterviews(res.interviews);
+      }
+    }).catch(() => {});
+  }, []);
 
   const roles = [
     'Software Developer',
@@ -226,6 +238,58 @@ export default function InterviewSetupPage() {
             )}
           </button>
         </div>
+
+        {/* Past Mock Interview Records */}
+        {pastInterviews.length > 0 && (
+          <div className="card-surface p-6 sm:p-8 space-y-4 bg-[#09090E]/90 border border-white/[0.08] rounded-2xl shadow-xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-purple-400" />
+                <h3 className="text-base font-bold text-white">Your Past Interview Sessions</h3>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                  {pastInterviews.length} Completed
+                </span>
+              </div>
+              <Link href="/profile" className="text-xs text-purple-400 hover:underline font-semibold">
+                View All in Profile
+              </Link>
+            </div>
+
+            <div className="divide-y divide-white/[0.06] rounded-xl bg-[#06060A] border border-white/[0.06] overflow-hidden">
+              {pastInterviews.slice(0, 3).map((session) => (
+                <div
+                  key={session.id || session.sessionId}
+                  className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-white/[0.02] transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-lg border ${
+                      session.overallScore >= 75
+                        ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                        : 'text-purple-300 bg-purple-500/10 border-purple-500/20'
+                    }`}>
+                      {session.overallScore}%
+                    </span>
+                    <div>
+                      <span className="text-xs font-semibold text-white">{session.role}</span>
+                      <span className="text-[11px] text-neutral-400 ml-2">({session.difficulty})</span>
+                      <span className="text-[11px] text-neutral-500 ml-2">
+                        &bull; {new Date(session.completedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+                  </div>
+
+                  <Link
+                    href={`/interview/result?sessionId=${session.sessionId}`}
+                    className="self-start sm:self-auto px-3 py-1.5 rounded-lg bg-white/[0.08] hover:bg-white/[0.12] text-white text-xs font-semibold border border-white/10 transition inline-flex items-center gap-1.5"
+                  >
+                    <span>Review Report</span>
+                    <ArrowRight className="w-3 h-3 text-purple-400" />
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -5,6 +5,33 @@ import { isSupabaseConnected } from '@/server/config/supabase';
 import { InterviewHistory } from '@/server/models/InterviewHistory';
 import { User } from '@/server/models/User';
 
+export async function GET(req: NextRequest) {
+  try {
+    const sessionId = req.nextUrl.searchParams.get('sessionId');
+    if (!sessionId) {
+      return NextResponse.json({ error: true, message: 'Session ID is required.' }, { status: 400 });
+    }
+
+    // Check if session was already completed and saved in database
+    if (isSupabaseConnected()) {
+      const existing = await InterviewHistory.findBySessionId(sessionId);
+      if (existing) {
+        return NextResponse.json(existing);
+      }
+    }
+
+    // Fall back to in-memory active session evaluation
+    const report = await interviewService.finishSession(sessionId);
+    return NextResponse.json(report);
+  } catch (err: any) {
+    console.error('[Interview Finish GET Error]:', err);
+    return NextResponse.json(
+      { error: true, message: err.message || 'Failed to retrieve interview session' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const user = optionalAuth(req);
@@ -13,6 +40,14 @@ export async function POST(req: NextRequest) {
 
     if (!sessionId) {
       return NextResponse.json({ error: true, message: 'Session ID is required.' }, { status: 400 });
+    }
+
+    // Check if this session was ALREADY finished and saved in database
+    if (isSupabaseConnected()) {
+      const existing = await InterviewHistory.findBySessionId(sessionId);
+      if (existing) {
+        return NextResponse.json(existing);
+      }
     }
 
     const report = await interviewService.finishSession(sessionId);

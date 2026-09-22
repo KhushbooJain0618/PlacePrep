@@ -78,6 +78,8 @@ export interface QuestionReview {
 }
 
 export interface InterviewFinishResponse {
+  id?: string;
+  userId?: string;
   sessionId: string;
   overallScore: number;
   technical: number;

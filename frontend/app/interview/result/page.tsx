@@ -35,10 +35,10 @@ function InterviewResultContent() {
   useEffect(() => {
     async function loadReport() {
       try {
-        const data = await api.finishInterview(sessionId);
+        const data = await api.getInterviewResult(sessionId);
         setReport(data);
       } catch (err: any) {
-        console.warn('Failed fetching live session finish:', err);
+        console.warn('Failed fetching interview result:', err);
         setError(err.message || 'No interview evaluation report found.');
       } finally {
         setLoading(false);

@@ -15,6 +15,16 @@ export async function GET(req: NextRequest) {
     try {
       const dbUser = await User.findById(user.userId);
       if (dbUser) {
+        try {
+          const { InterviewHistory } = await import('@/server/models/InterviewHistory');
+          const history = await InterviewHistory.findByUser(user.userId);
+          if (history.length > 0) {
+            dbUser.interviewsCompleted = Math.max(dbUser.interviewsCompleted || 0, history.length);
+            const avg = Math.round(history.reduce((acc, curr) => acc + (curr.overallScore || 0), 0) / history.length);
+            dbUser.preparationProgress = Math.max(dbUser.preparationProgress || 0, avg);
+          }
+        } catch {}
+
         return NextResponse.json({ user: formatUser(dbUser) });
       }
     } catch (dbErr) {

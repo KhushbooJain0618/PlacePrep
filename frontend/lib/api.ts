@@ -222,6 +222,12 @@ export const api = {
     });
   },
 
+  async getInterviewResult(sessionId: string): Promise<InterviewFinishResponse> {
+    return safeFetch<InterviewFinishResponse>(`/interview/finish?sessionId=${encodeURIComponent(sessionId)}`, {
+      method: 'GET',
+    });
+  },
+
   async getInterviewHistory(): Promise<{ interviews: InterviewFinishResponse[] }> {
     return safeFetch<{ interviews: InterviewFinishResponse[] }>('/interview/history', {
       method: 'GET',
